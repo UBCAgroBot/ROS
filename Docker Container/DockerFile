@@ -1,0 +1,38 @@
+# docker pull nvcr.io/nvidia/l4t-jetpack:r35.3.1
+# jetpack version should be 5.1.1
+FROM JetPack-L4T:latest
+
+# not sure if cuda version is matched... https://github.com/dusty-nv/jetson-containers/blob/master/packages/cuda/cuda/config.py
+ENV CUDA_VERSION=12.2.0 
+ENV CUDNN_VERSION=8.5?
+ENV TENSORRT_VERSION=8.6?
+ENV PYTHON_VERSION=3.8
+ENV PIP_INDEX_URL=
+
+COPY . /scripts
+WORKDIR /scripts
+RUN apt -y update && apt -y upgrade
+
+# build-essential
+RUN echo 'installing build-essential'
+
+# python3.8.10
+
+# numpy
+
+# opencv-cuda
+
+# cmake_apt
+
+# onnx
+
+# ros-foxy
+
+# onnxruntime 1.16.3
+
+# protobuff_cpp
+
+# zed
+
+
+ENTRYPOINT [ "stress" ]
