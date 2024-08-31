@@ -1,0 +1,100 @@
+services:
+  base-cpu:
+    image: agrobotappliedai/mlcontainers-cpu:latest
+    container_name: cpu-ml-container
+    volumes:
+      - ./workspace:/workspace
+    ports:
+      - "8888:8888"
+    profiles: [cpu, cpu-benchmarking]
+  
+  base-gpu:
+    image: agrobotappliedai/mlcontainers-gpu:latest
+    container_name: gpu-ml-container
+    volumes:
+      - ./workspace:/workspace
+    network_mode: host
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    shm_size: 1gb
+    profiles: [gpu, gpu-benchmarking]
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - "9090:9090"
+    networks:
+      - benchmarking
+    profiles: [cpu-benchmarking, gpu-benchmarking]
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    user: "104"
+    volumes:
+      - ./grafana/provisioning/:/etc/grafana/provisioning/
+      - grafana_storage:/var/lib/grafana
+    env_file:
+      - ./grafana/config.monitoring
+    ports:
+      - "50060:3000"
+    networks:
+      - benchmarking
+    profiles: [cpu-benchmarking, gpu-benchmarking]
+
+  cadvisor:
+    image: google/cadvisor:latest
+    container_name: cadvisor
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk:/dev/disk:ro
+      - /etc/machine-id:/etc/machine-id:ro
+    command:
+      - '-v=0' 
+    ports:
+      - "8080:8080"
+    networks:
+      - benchmarking
+    devices:
+      - /dev/kmsg
+    profiles: [cpu-benchmarking, gpu-benchmarking]
+
+  # necessary for host-level metrics
+  # node-exporter:
+  #   image: prom/node-exporter
+  #   container_name: node-exporter
+  #   volumes:
+  #     - /proc:/host/proc:ro
+  #     - /sys:/host/sys:ro
+  #   command: 
+  #     - '--path.procfs=/host/proc' 
+  #     - '--path.sysfs=/host/sys'
+  #     - --collector.filesystem.ignored-mount-points
+  #     - "^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
+  #   ports:
+  #     - 9100:9100
+
+volumes:
+    prometheus_data: {}
+    grafana_storage: {}
+
+networks:
+  benchmarking:
+    driver: bridge

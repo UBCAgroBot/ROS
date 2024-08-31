@@ -1,0 +1,155 @@
+# Checks for merging PR, includes linting
+name: Integration pipeline
+run-name: Integration pipeline trigged by ${{ github.actor }} 
+
+on:
+  pull_request:
+
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Which branch you would like to run the pipeline on?'
+        required: false
+        type: string
+        default: 'main'
+      delivery: 
+        description: 'Would you like to update the official image?'
+        required: false
+        default: true
+        type: bool
+      deployment:
+        description: 'Would you like to run unit and benchmarking tests?'
+        required: false
+        default: true
+        type: bool
+
+jobs:
+  integration:
+    runs-on: self-hosted
+    permissions:
+      checks: write
+      pull-requests: write
+    id: integration
+    steps:
+      - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."
+      - run: echo "The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+      - run: echo "BRANCH=${{ github.event.inputs.branch }}" >> $GITHUB_ENV
+      
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch || github.ref }}
+      
+      - name: Print branch
+        run: |
+          echo "Checked out branch: ${{ github.event.inputs.branch || github.ref }}"
+
+      - name: Show directory contents
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "Directory contents:"
+          ls -la
+      
+      - name: List files in the repository
+        run: |
+          echo "github workspace folder"
+          ls ${{ github.workspace }}
+
+      - name: Check current directory
+        run: pwd
+
+      - name: List files in current directory
+        run: ls -la
+
+      - name: List root directory
+        run: ls -la /
+
+      - name: List runner's work directory
+        run: ls -la /home/runner/work
+
+      - name: List runner's temp directory
+        run: ls -la /home/runner/_temp
+
+      - name: List runner's tool directory
+        run: ls -la /home/runner/_tool
+
+      - name: List GitHub workspace directory
+        run: ls -la ${{ github.workspace }}
+
+      - name: Show environment variables
+        run: env
+
+      # - name: C++ lint
+      #   uses: cpp-linter/cpp-linter-action@v2
+      #   id: cpp_linter
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     style: "file"
+      #     tidy-checks: ""
+      #     thread-comments: ${{ github.event_name == 'pull_request' && 'update' }}
+
+      # - name: Lint with pylint
+      #   run: |
+      #     pylint --disable=C0301 --disable=C0326 *.py
+      #     if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      
+      # - name: Lint with flake8
+      #   run: |
+      #     # stop the build if there are Python syntax errors or undefined names
+      #     flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+      #     # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+      #     flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      
+      # - name: Fail fast?!
+      #   if: steps.linter.outputs.checks-failed > 0
+      #   run: exit 1
+
+      # - name: Check for linting errors
+      #   id: lint-check
+      #   run: |
+      #     if [ -f lint-results.txt ]; then
+      #       echo "Linting issues found"
+      #       cat lint-results.txt
+      #       exit 1
+      #     else
+      #       echo "No linting issues found"
+      #     fi
+
+      # - name: Compile
+      #   run: |
+      #     cd /ros_ws
+      #     rosdep install --from-paths src -y --ignore-src
+      #     colcon build --packages-select custom_interface
+      #     colcon build --packages-select node_test
+      #     . install/setup.bash
+
+      # - name: Test run
+      #   run: |
+      #     ros2 run node_test jetson_node
+
+      - name: Update pull request
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add .
+          
+          git commit -m "Fix linting issues"
+          git push origin HEAD:${{ github.head_ref }}
+  
+  # These are only triggered through workflow dispatch
+  delivery:
+    if: ${{ github.event.inputs.delivery == 'true' }}
+    needs: integration
+    uses: ./.github/workflows/delivery.yml
+    with:
+      branch: {{ github.events.inputs.branch }}
+      deployment: {{ github.events.inputs.deployment }}
+
+  deployment:
+    if: ${{ github.event.inputs.deployment == 'true' }}
+    needs: delivery
+    uses: ./.github/workflows/deployment.yml
+    with: 
+      container_branch: {{ github.events.inputs.branch }}
+      container_version: {{ needs.delivery.outputs.version }}

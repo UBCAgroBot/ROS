@@ -1,0 +1,94 @@
+# Runs unit tests and benchmarking inside the container
+name: Deployment Pipeline
+run-name: Deployment pipeline trigged by ${{ github.actor }} 
+
+on: 
+  workflow_call:
+    inputs:
+      container_branch:
+        required: false
+        type: string
+        default: 'main'
+      container_version:
+        required: true
+        type: number
+        
+  workflow_dispatch:
+    inputs:
+      container_branch:
+        description: 'What branch container would you like to run?'
+        required: true
+        type: string
+      container_version:
+        description: 'Which container version would you like to run?'
+        required: true
+        type: number
+
+jobs:
+  image_filter: 
+    runs-on: self-hosted
+    outputs:
+      image_tag:  ${{ steps.set-tag.outputs.image_tag }}
+    steps:
+      - name: Set image tag
+        id: set-tag
+        run: |
+          CONTAINER_BRANCH=${{ github.event.inputs.container_branch }}
+          CONTAINER_VERSION=${{ github.event.inputs.container_version }}
+          IMAGE_TAG="jetson_ros:${CONTAINER_BRANCH}-v${CONTAINER_VERSION}"
+          echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+  # testing:
+  #   runs-on: self-hosted
+  #   needs: image_filter
+  #   container: 
+  #     image: ${needs.set-image-tag.outputs.image_tag}
+
+  #   # directory managing here...
+  #   steps:
+  #     - name: Run unit tests
+  #       run: ./deployment-scripts/unit_tests.sh > ./unit_test_results.txt
+
+  #     - name: Generate unit test markdown report
+  #       run: |
+  #         echo "# Unit Test Results" > unit_test_report.md
+  #         echo "\n\n## Results:" >> unit_test_report.md
+  #         cat unit_test_results.txt >> unit_test_report.md
+
+  #     - name: Upload unit test report artifact
+  #       id: upload_artifact
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: '${github.event.inputs.container_branch}-${github.event.inputs.container_version}-unit-test-report-${github.run_number}'
+  #         path: ./unit_test_report.md
+  #         if-no-files-found: error
+      
+  #     - name: Run benchmarking tests
+  #       run: ./deployment-scripts/benchmark.sh > ./benchmark_results.txt
+
+  #     - name: Generate unit test markdown report
+  #       run: |
+  #         echo "# Benchmarking Results" > benchmark_report.md
+  #         echo "\n\n## Results:" >> benchmark_report.md
+  #         cat benchmark_results.txt >> benchmark_report.md
+
+  #     - name: Upload unit test report artifact
+  #       id: upload_artifact
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: '${github.event.inputs.container_branch}-${github.event.inputs.container_version}-benchmark-report-${github.run_number}'
+  #         path: ./benchmark_report.md
+  #         if-no-files-found: error
+      
+  #     - name: Output artifact URL
+  #       run: |
+  #         REPO_URL="https://github.com/${{ github.repository }}"
+  #         ARTIFACT_URL="$REPO_URL/actions/runs/${{ github.run_id }}/artifacts"
+  #         echo "Artifact URL: $ARTIFACT_URL"
+
+  #     - name: Add reports to workflow summary
+  #       if: always() 
+  #       run: |
+  #         cat unit_test_report.md >> $GITHUB_STEP_SUMMARY
+  #         echo "/n/n" >> $GITHUB_STEP_SUMMARY
+  #         cat benchmark_report.md >> $GITHUB_STEP_SUMMARY
