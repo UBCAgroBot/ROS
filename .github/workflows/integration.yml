@@ -16,12 +16,12 @@ on:
         description: 'Would you like to update the official image?'
         required: false
         default: true
-        type: bool
+        type: boolean
       deployment:
         description: 'Would you like to run unit and benchmarking tests?'
         required: false
         default: true
-        type: bool
+        type: boolean
 
 jobs:
   integration:
