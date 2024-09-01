@@ -4,8 +4,9 @@ set -ex
 version="4.10.0"
 folder="workspace"
 
-python3 -c "import cv2; print('OpenCV version:', str(cv2.__version__)); print(cv2.getBuildInformation())"
-echo "** Remove other OpenCV first"
+# commented since repeated but will be needed for fresh install
+# python3 -c "import cv2; print('OpenCV version:', str(cv2.__version__)); print(cv2.getBuildInformation())"
+# echo "** Remove other OpenCV first"
 apt -y purge *libopencv*
 
 echo "------------------------------------"
