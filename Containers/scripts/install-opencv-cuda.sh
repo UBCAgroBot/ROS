@@ -4,7 +4,6 @@ set -ex
 version="4.10.0"
 folder="workspace"
 
-# commented since repeated but will be needed for fresh install
 python3 -c "import cv2; print('OpenCV version:', str(cv2.__version__)); print(cv2.getBuildInformation())"
 echo "** Remove other OpenCV first"
 apt -y purge *libopencv*
@@ -47,5 +46,5 @@ echo 'export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH' >> ~/.bashrc
 echo 'export PYTHONPATH=/usr/local/lib/python3.10/site-packages/:$PYTHONPATH' >> ~/.bashrc
 source ~/.bashrc
 
-cd /scripts
-python3 opencv-cuda-test.py
+# cd /scripts
+# python3 opencv-cuda-test.py
