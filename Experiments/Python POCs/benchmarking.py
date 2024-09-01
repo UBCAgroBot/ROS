@@ -28,7 +28,7 @@ if __name__ == "__main__":
                 cpu_usage = 100 - jetson.cpu['total']['idle']
                 memory_usage = (jetson.memory['RAM']['used'] / jetson.memory['RAM']['tot']) * 100
                 # gpu_usage = jetson.gpu[305987]['status']['load'] # number or string?
-                gpu_usage = jetson.gpu['gpu']['load']
+                # gpu_usage = jetson.gpu['gpu']['load']
                 
                 cpu_temp = jetson.temperature['cpu']['temp']
                 gpu_temp = jetson.temperature['gpu']['temp']
@@ -37,7 +37,7 @@ if __name__ == "__main__":
                 system_current = jetson.power['tot']['curr']
                 system_power = jetson.power['tot']['power']
                 
-                # gpu_usage = jetson.gpu['GPU']['status']['load']
+                gpu_usage = jetson.gpu['GPU']['status']['load']
                 
                 if args.verbose:
                     print(f"CPU Usage: {cpu_usage:.1f}%")

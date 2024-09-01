@@ -13,7 +13,27 @@ with jtop() as jetson:
         print("------ TOTAL ------")
         for key, value in total.items():
             print("{key}: {value}".format(key=key, value=value))
+        
+        for idx, cpu in enumerate(jetson.gpu['gpu']):
+            print("------ GPU{idx} ------".format(idx=idx))
+            for key, value in cpu.items():
+                print("{key}: {value}".format(key=key, value=value))
+        # read aggregate CPU status
+        total = jetson.gpu['total']
+        print("------ TOTAL ------")
+        for key, value in total.items():
+            print("{key}: {value}".format(key=key, value=value))
             
+        for idx, cpu in enumerate(jetson.temperature):
+            print("------ CPU{idx} ------".format(idx=idx))
+            for key, value in cpu.items():
+                print("{key}: {value}".format(key=key, value=value))
+        # read aggregate CPU status
+        total = jetson.temprature['total']
+        print("------ TOTAL ------")
+        for key, value in total.items():
+            print("{key}: {value}".format(key=key, value=value))
+        
         print("overview!!!")
         # CPU
         print('*** CPUs ***')
@@ -51,3 +71,6 @@ with jtop() as jetson:
         # Power
         print('*** power ***')
         print(jetson.power)
+        
+        print(jetson.stats)
+        print(jetson.stats.keys())
