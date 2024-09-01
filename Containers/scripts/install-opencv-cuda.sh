@@ -47,12 +47,4 @@ echo 'export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH' >> ~/.bashrc
 echo 'export PYTHONPATH=/usr/local/lib/python3.10/site-packages/:$PYTHONPATH' >> ~/.bashrc
 source ~/.bashrc
 
-python3 /scripts/opencv-cuda-test.py
-
-# old: (python wheel might not be installed by default???)
-# pip3 wheel --wheel-dir=/opt --verbose .
-# ls /opt
-# cd /
-# rm -rf /opt/opencv-python
-# pip3 install --no-cache-dir --verbose /opt/opencv*.whl
-# python3 -c "import cv2; print('OpenCV version:', str(cv2.__version__)); print(cv2.getBuildInformation())"
+python3 opencv-cuda-test.py
