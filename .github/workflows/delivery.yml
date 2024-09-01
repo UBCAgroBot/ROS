@@ -81,10 +81,10 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
+          platforms: linux/amd64,linux/arm64
+          file: bruh/bruh.Dockerfile
+          network: host
+          # build-args: BRANCH_NAME="${{ github.ref_name }}"
           tags: |
             "agrobotappliedai/jetson_ros:${{ github.ref_name }}-latest"
             "agrobotappliedai/jetson_ros:${{ github.ref_name }}-v${{ steps.get_next_version.outputs.version }}"
-          platforms: linux/amd64,linux/arm64
-          file: bruh/bruh.Dockerfile # change to containers
-          network: host
-          build-args: BRANCH_NAME="${{ github.ref_name }}"
