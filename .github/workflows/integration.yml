@@ -1,4 +1,4 @@
-# Checks for merging PR, includes linting
+# Checks for merging PR, linting is currently disabled
 name: Integration pipeline
 run-name: Integration pipeline triggered by ${{ github.actor }} 
 
@@ -73,37 +73,6 @@ jobs:
       - name: Show environment variables
         run: env
 
-      # - name: C++ lint
-      #   uses: cpp-linter/cpp-linter-action@v2
-      #   id: cpp_linter
-      #   with:
-      #     style: "file"
-      #     tidy-checks: ""
-      #     thread-comments: ${{ github.event_name == 'pull_request' && 'update' }}
-
-      # - name: Lint with pylint
-      #   run: |
-      #     pylint --disable=C0301 --disable=C0326 *.py
-      #     if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-      
-      # - name: Lint with flake8
-      #   run: |
-      #     # stop the build if there are Python syntax errors or undefined names
-      #     flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-      #     # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-      #     flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-
-      # - name: Check for linting errors
-      #   id: lint-check
-      #   run: |
-      #     if [ -f lint-results.txt ]; then
-      #       echo "Linting issues found"
-      #       cat lint-results.txt
-      #       exit 1
-      #     else
-      #       echo "No linting issues found"
-      #     fi
-
       # - name: Compile
       #   run: |
       #     cd /ros_ws
@@ -115,19 +84,6 @@ jobs:
       # - name: Test run
       #   run: |
       #     ros2 run node_test jetson_node
-
-      - name: Update pull request
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          
-          if [[ $(git status --porcelain) ]]; then
-            git add .
-            git commit -m "Auto-fix lint issues"
-            git push origin HEAD:${{ github.head_ref }}
-          else
-            echo "No lint fixes applied, nothing to commit."
-          fi
       
       - run: echo ${{ github.event.inputs.delivery }}
       - run: echo ${{ inputs.delivery }}
