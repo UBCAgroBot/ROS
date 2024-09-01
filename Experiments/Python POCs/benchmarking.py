@@ -27,10 +27,10 @@ if __name__ == "__main__":
             while jetson.ok() and count < args.duration * 60:
                 cpu_usage = jetson.cpu['total']['system'] + jetson.cpu['total']['user']
                 memory_usage = (jetson.memory['RAM']['used'] / jetson.memory['RAM']['tot']) * 100
-                # gpu_usage = jetson.gpu['305987']['status']['load'] # number or string?
+                gpu_usage = jetson.gpu['305987']['status']['load'] # number or string?
                 print(jetson.gpu)
                 print(jetson.cpu)
-                # cpu_temp = jetson.temperature['CPU']['temp']
+                # cpu_temp = jetson.temperature['cpu']['temp']
                 gpu_temp = jetson.temperature['GPU']['temp']
                 gpu_mem = int(str(jetson.memory['RAM']['shared'])[:3])
                 system_voltage = jetson.power['tot']['volt']
