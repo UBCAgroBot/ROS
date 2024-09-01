@@ -13,3 +13,41 @@ with jtop() as jetson:
         print("------ TOTAL ------")
         for key, value in total.items():
             print("{key}: {value}".format(key=key, value=value))
+            
+        print("overview!!!")
+        # CPU
+        print('*** CPUs ***')
+        print(jetson.cpu)
+        # CPU
+        print('*** Memory ***')
+        print(jetson.memory)
+        # GPU
+        print('*** GPU ***')
+        print(jetson.gpu)
+        # Engines
+        print('*** engine ***')
+        print(jetson.engine)
+        # nvpmodel
+        print('*** NV Power Model ***')
+        print(jetson.nvpmodel)
+        # jetson_clocks
+        print('*** jetson_clocks ***')
+        print(jetson.jetson_clocks)
+        # Status disk
+        print('*** disk ***')
+        print(jetson.disk)
+        # Status fans
+        print('*** fan ***')
+        print(jetson.fan)
+        # uptime
+        print('*** uptime ***')
+        print(jetson.uptime)
+        # local interfaces
+        print('*** local interfaces ***')
+        print(jetson.local_interfaces)
+        # Temperature
+        print('*** temperature ***')
+        print(jetson.temperature)
+        # Power
+        print('*** power ***')
+        print(jetson.power)
