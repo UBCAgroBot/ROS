@@ -81,7 +81,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          context: {{defaultContext}}:Containers
+          context: "{{defaultContext}}:Containers"
           platforms: linux/arm64
           file: ./Jetson.Dockerfile
           network: host
