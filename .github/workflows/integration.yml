@@ -84,6 +84,8 @@ jobs:
       # - name: Test run
       #   run: |
       #     ros2 run node_test jetson_node
+
+      # reference the lint pipeline later....
       
       - run: echo ${{ github.event.inputs.delivery }}
       - run: echo ${{ inputs.delivery }}

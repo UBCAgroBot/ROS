@@ -72,15 +72,16 @@ if __name__ == "__main__":
                 if count % 5 == 4:
                     averages = calculate_rolling_average(rolling_data)
                     if args.verbose:
-                        print(f"Rolling Average - CPU Usage: {averages['cpu_usage']:.1f}%")
-                        print(f"Rolling Average - Memory Usage: {averages['memory_usage']:.1f}%")
-                        print(f"Rolling Average - GPU Usage: {averages['gpu_usage']:.1f}%")
-                        print(f"Rolling Average - GPU Memory: {averages['gpu_mem']} MB")
-                        print(f"Rolling Average - CPU Temperature: {averages['cpu_temp']:.1f}°C")
-                        print(f"Rolling Average - GPU Temperature: {averages['gpu_temp']:.1f}°C")
-                        print(f"Rolling Average - System Voltage: {averages['system_voltage']} V")
-                        print(f"Rolling Average - System Current: {averages['system_current']} mA")
-                        print(f"Rolling Average - System Power: {averages['system_power']} W")
+                        print(f"\nRolling Average - Time: {count + 1}s")
+                        print(f"CPU Usage: {averages['cpu_usage']:.1f}%")
+                        print(f"Memory Usage: {averages['memory_usage']:.1f}%")
+                        print(f"GPU Usage: {averages['gpu_usage']:.1f}%")
+                        print(f"GPU Memory: {averages['gpu_mem']} MB")
+                        print(f"CPU Temperature: {averages['cpu_temp']:.1f}°C")
+                        print(f"GPU Temperature: {averages['gpu_temp']:.1f}°C")
+                        print(f"System Voltage: {averages['system_voltage']} V")
+                        print(f"System Current: {averages['system_current']} mA")
+                        print(f"System Power: {averages['system_power']} W")
 
                     # Write the rolling average to the CSV file
                     writer.writerow(averages)
@@ -93,5 +94,3 @@ if __name__ == "__main__":
     print("\nFinal Averages over the entire interval:")
     for key, value in final_averages.items():
         print(f"{key}: {value:.2f}")
-
-    print("Logging finished")

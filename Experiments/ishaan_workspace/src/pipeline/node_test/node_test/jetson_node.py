@@ -112,35 +112,20 @@ class JetsonNode(Node):
         self.detection(image_gpu)
 
     def detection(self, image_gpu):
-        # pid = os.getpid()
-        # print(pid)
         # Allocate device memory for the input and output data
         d_output = cuda.mem_alloc(1 * self.engine.get_binding_shape(0).volume() * np.dtype(np.float32).itemsize)
 
-        # Execute the engine
-        # pre_mem = psutil.Process(pid).memory_percent()
-        # pre_cpu = psutil.Process(pid).cpu_percent(interval=None)
         tic = time.perf_counter_ns()
         self.context.execute(bindings=[int(image_gpu.ptr), int(d_output)])
-        # post_cpu = psutil.Process(pid).cpu_percent(interval=None)
-        # post_mem = psutil.Process(self.pid).memory_percent()
         toc = time.perf_counter_ns()
 
         # Copy the output data back to the host
         output = np.empty(self.engine.get_binding_shape(0), dtype=np.float32)
         cuda.memcpy_dtoh(output, d_output)
         
-        # self.cpu = ((self.post_cpu-self.pre_cpu)/self.time) * 100
-        # self.mem = post_mem - pre_mem
         # self.inferencing_time = (toc-tic)/1e6
-        # self.gpu = 0 # gpu.load*100
-        # self.gpu_mem = 0 # (gpu.memoryUsed / gpu.memoryTotal) * 100
-        
-        # self.get_logger().info(f"CPU usage: {self.cpu}%")
-        # self.get_logger().info(f"GPU usage: {self.gpu}%")
-        # self.get_logger().info(f"GPU VRAM usage: {self.gpu_mem}%")
-        # self.get_logger().info(f"Memory usage: {self.mem}%")
         # self.get_logger().info(f"Execution time: {self.time} milliseconds")
+        
         self.postprocessing(output)
         self.output.clear()
         
@@ -234,5 +219,3 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
-    
-    

@@ -19,8 +19,6 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 ARG BRANCH_NAME=main
 
-RUN echo $PWD
-
 COPY ./scripts /scripts
 
 RUN /scripts/install-build-essential.sh
@@ -36,7 +34,5 @@ RUN /scripts/install-ros2.sh
 RUN pip3 install -U --no-cache-dir --verbose jetson-stats numpy onnx  && \
     pip3 show numpy && python3 -c 'import numpy; print(numpy.__version__)' && \
     pip3 show onnx && python3 -c 'import onnx; print(onnx.__version__)'
-
-RUN /scripts/install-ros2-packages.sh
 
 ENTRYPOINT ["/bin/bash"]
