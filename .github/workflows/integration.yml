@@ -137,7 +137,8 @@ jobs:
   # These are only triggered through workflow dispatch
   delivery:
     if: ${{ github.event.inputs.delivery }}
-    run: echo "this was detected successfully as a boolean (delivery)"
+    steps:
+      - run: echo "this was detected successfully as a boolean (delivery)"
     # uses: ./.github/workflows/delivery.yml
     # with:
     #   branch: {{ github.head_ref }}
@@ -145,7 +146,8 @@ jobs:
 
   deployment:
     if: ${{ inputs.deployment }}
-    run: echo "this was detected successfully as boolean (deployment)"
+    steps:
+      - run: echo "this was detected successfully as boolean (deployment)"
     # needs: delivery
     # uses: ./.github/workflows/deployment.yml
     # with: 

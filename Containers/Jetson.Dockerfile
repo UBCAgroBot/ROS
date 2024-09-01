@@ -19,6 +19,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 ARG BRANCH_NAME=main
 
+RUN echo $PWD
+
 COPY ./scripts /scripts
 
 RUN /scripts/install-build-essential.sh
