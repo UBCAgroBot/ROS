@@ -1,6 +1,6 @@
 # Compiling code into container and uploading to repository
 name: Delivery Pipeline
-run-name: Delivery pipeline trigged by ${{ github.actor }} 
+run-name: Delivery pipeline triggered by ${{ github.actor }} 
 
 on: 
   push: # pushes to the main branch only occur if the merge request has been accepted
@@ -70,7 +70,7 @@ jobs:
         run: |
           echo "Current directory: $(pwd)"
           echo "Directory contents:"
-          ls -la
+          tree
       
       - name: List files in the repository
         run: |
@@ -81,7 +81,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: "agrobotappliedai/jetson_ros:${{ github.ref_name }}-latest"
+          tags: "agrobotappliedai/jetson_ros:${{ github.ref_name }}-latest","agrobotappliedai/jetson_ros:${{ github.ref_name }}-v${{ steps.get_next_version.outputs.version }}"
           platforms: linux/amd64,linux/arm64
           file: ./Container/Jetson.Dockerfile
           network: host

@@ -1,6 +1,6 @@
 # Checks for merging PR, includes linting
 name: Integration pipeline
-run-name: Integration pipeline trigged by ${{ github.actor }} 
+run-name: Integration pipeline triggered by ${{ github.actor }} 
 
 on:
   pull_request:

@@ -1,6 +1,6 @@
 # Runs unit tests and benchmarking inside the container
 name: Deployment Pipeline
-run-name: Deployment pipeline trigged by ${{ github.actor }} 
+run-name: Deployment pipeline triggered by ${{ github.actor }} 
 
 on: 
   workflow_call:
