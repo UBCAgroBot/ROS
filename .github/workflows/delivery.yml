@@ -13,25 +13,16 @@ on:
         description: "The latest docker image version"
         value: ${{ jobs.build.outputs.container_version }}
     inputs:
-      branch:
-        required: false
-        default: main
-        type: string
       deployment:
-        required: false
+        required: true
         default: true
         type: boolean
 
   workflow_dispatch:
     inputs:
-      branch:
-        description: 'Which branch would you like to compile and upload?'
-        required: false
-        default: main
-        type: string
       deployment: 
-        description: 'Would you like to run unit and benchmarking tests?'
-        required: false
+        description: 'Run unit and benchmarking tests?'
+        required: true
         default: false
         type: boolean
 
@@ -41,6 +32,9 @@ jobs:
     outputs:
       container_version: ${{ steps.get_next_version.outputs.version }}
     steps: 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -69,12 +63,11 @@ jobs:
             echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT
           fi
       
-      # context needs to be sorted
       # - name: Build and push multi-platform Docker image
-      #   uses: docker/build-push-action@v4
+      #   uses: docker/build-push-action@v6
       #   with:
-      #     # context: '.'
+      #     # context: .
       #     push: true
-      #     tags: 'agrobotappliedai/jetson_ros:${ github.events.inputs.branch }-latest', 'agrobotappliedai/jetson_ros:${ github.events.inputs.branch }-v${ steps.get_next_version.outputs.version }'
+      #     tags: ["agrobotappliedai/jetson_ros:${{ github.ref_name }}-latest", "agrobotappliedai/jetson_ros:${{ github.ref_name }}-v${{ steps.get_next_version.outputs.version }}"]
       #     platforms: linux/amd64,linux/arm64
-      #     file: Dockerfile
+      #     file: ./Container/Jetson.Dockerfile

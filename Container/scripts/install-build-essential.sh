@@ -4,13 +4,13 @@ set -ex
 echo 'installing build-essential'
 
 apt -y update && apt -y upgrade
-apt-get install -y --no-install-recommends
-    locales \
-    locales-all \
-    tzdata \
-locale-gen en_US $LANG
-update-locale LC_ALL=$LC_ALL LANG=$LANG
-locale
+# apt-get install -y --no-install-recommends
+#     locales \
+#     locales-all \
+#     tzdata \
+# locale-gen en_US $LANG
+# update-locale LC_ALL=$LC_ALL LANG=$LANG
+# locale
 apt-get install -y --no-install-recommends \
     build-essential \
     software-properties-common \
