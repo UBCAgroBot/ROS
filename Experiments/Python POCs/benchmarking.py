@@ -23,9 +23,9 @@ if __name__ == "__main__":
             # Write header
             writer.writeheader()
             # Start loop
-            os.system("clear")  # start ros2 launch
+            os.system("clear")
             while jetson.ok() and count < args.duration * 60:
-                cpu_usage = 100 - jetson.cpu['total']['idle']
+                cpu_usage = jetson.cpu['total']['user']
                 memory_usage = (jetson.memory['RAM']['used'] / jetson.memory['RAM']['tot']) * 100
                 gpu_usage = jetson.gpu['gpu']['status']['load']
                 cpu_temp = jetson.temperature['cpu']['temp']
