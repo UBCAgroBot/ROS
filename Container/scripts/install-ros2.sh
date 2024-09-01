@@ -1,4 +1,7 @@
+#!/usr/bin/env bash
 set -ex
+
+echo 'installing ros2'
 
 locale-gen en_US en_US.UTF-8 && update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
 
@@ -9,10 +12,6 @@ apt-get install -y --no-install-recommends \
 		ca-certificates \
 		locales \
 		software-properties-common \
-		# libpython3-dev \
-		# python3-colcon-common-extensions \
-		# python3-numpy \
-		# python3-rosdep \
 
 add-apt-repository universe
 curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg

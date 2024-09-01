@@ -63,11 +63,26 @@ jobs:
             echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT
           fi
       
-      # - name: Build and push multi-platform Docker image
-      #   uses: docker/build-push-action@v6
-      #   with:
-      #     # context: .
-      #     push: true
-      #     tags: ["agrobotappliedai/jetson_ros:${{ github.ref_name }}-latest", "agrobotappliedai/jetson_ros:${{ github.ref_name }}-v${{ steps.get_next_version.outputs.version }}"]
-      #     platforms: linux/amd64,linux/arm64
-      #     file: ./Container/Jetson.Dockerfile
+      - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."
+      - run: echo "The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+      - run: echo ${{ steps.get_next_version.outputs.version }}
+      - name: Show directory contents
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "Directory contents:"
+          ls -la
+      
+      - name: List files in the repository
+        run: |
+          echo "github workspace folder"
+          ls ${{ github.workspace }}
+      
+      - name: Build and push multi-platform Docker image
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: ["agrobotappliedai/jetson_ros:${{ github.ref_name }}-latest", "agrobotappliedai/jetson_ros:${{ github.ref_name }}-v${{ steps.get_next_version.outputs.version }}"]
+          platforms: linux/amd64,linux/arm64
+          file: ./Container/Jetson.Dockerfile
+            network: host
+            build-args: BRANCH_NAME="${{ github.ref_name }}"

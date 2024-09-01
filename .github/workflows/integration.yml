@@ -7,11 +7,6 @@ on:
 
   workflow_dispatch:
     inputs:
-      branch:
-        description: 'Which branch you would like to run the pipeline on?'
-        required: false
-        type: string
-        default: 'main'
       delivery: 
         description: 'Would you like to update the official image?'
         required: false
@@ -32,17 +27,16 @@ jobs:
     id: integration
     steps:
       - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."
-      - run: echo "The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
-      - run: echo "BRANCH=${{ github.event.inputs.branch }}" >> $GITHUB_ENV
+      - run: echo "The name of your branch is ${{ github.head_ref }} and your repository is ${{ github.repository }}."
       
       - name: Checkout branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.branch || github.ref }}
+          ref: ${{ github.head_ref }}
       
       - name: Print branch
         run: |
-          echo "Checked out branch: ${{ github.event.inputs.branch || github.ref }}"
+          echo "Checked out branch: ${{ github.head_ref }}"
 
       - name: Show directory contents
         run: |
@@ -82,8 +76,6 @@ jobs:
       # - name: C++ lint
       #   uses: cpp-linter/cpp-linter-action@v2
       #   id: cpp_linter
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       #   with:
       #     style: "file"
       #     tidy-checks: ""
@@ -100,10 +92,6 @@ jobs:
       #     flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
       #     # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
       #     flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-      
-      # - name: Fail fast?!
-      #   if: steps.linter.outputs.checks-failed > 0
-      #   run: exit 1
 
       # - name: Check for linting errors
       #   id: lint-check
@@ -132,24 +120,34 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add .
           
-          git commit -m "Fix linting issues"
-          git push origin HEAD:${{ github.head_ref }}
-  
+          if [[ $(git status --porcelain) ]]; then
+            git add .
+            git commit -m "Auto-fix lint issues"
+            git push origin HEAD:${{ github.head_ref }}
+          else
+            echo "No lint fixes applied, nothing to commit."
+          fi
+      
+      - run: echo ${{ github.event.inputs.delivery }}
+      - run: echo ${{ inputs.delivery }}
+      - run: echo ${{ github.event.inputs.deployment }}
+      - run: echo ${{ inputs.deployment }}
+
   # These are only triggered through workflow dispatch
   delivery:
-    if: ${{ github.event.inputs.delivery == 'true' }}
-    needs: integration
-    uses: ./.github/workflows/delivery.yml
-    with:
-      branch: {{ github.events.inputs.branch }}
-      deployment: {{ github.events.inputs.deployment }}
+    if: ${{ github.event.inputs.delivery }}
+    run: echo "this was detected successfully as a boolean (delivery)"
+    # uses: ./.github/workflows/delivery.yml
+    # with:
+    #   branch: {{ github.head_ref }}
+    #   deployment: {{ github.events.inputs.deployment }}
 
   deployment:
-    if: ${{ github.event.inputs.deployment == 'true' }}
-    needs: delivery
-    uses: ./.github/workflows/deployment.yml
-    with: 
-      container_branch: {{ github.events.inputs.branch }}
-      container_version: {{ needs.delivery.outputs.version }}
+    if: ${{ inputs.deployment }}
+    run: echo "this was detected successfully as boolean (deployment)"
+    # needs: delivery
+    # uses: ./.github/workflows/deployment.yml
+    # with: 
+    #   container_branch: {{ github.head_ref }}
+    #   container_version: {{ needs.delivery.outputs.version }}
