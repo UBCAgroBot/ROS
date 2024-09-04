@@ -1,3 +1,5 @@
+# only display what the what jetson sees (ROI + displacement) and the bounding boxes
+
 import cv2
 import threading
 

@@ -17,8 +17,6 @@ ENV DEBIAN_FRONTEND=noninteractive \
     OPENCV_VERSION=4.8.1 \
     OPENCV_DEB=OpenCV-4.8.1-aarch64.tar.gz
 
-ARG BRANCH_NAME=main
-
 COPY ./scripts /scripts
 
 RUN /scripts/install-build-essential.sh
