@@ -1,37 +1,11 @@
+import sys
 import tensorflow as tf
-from tensorflow.python.compiler.tensorrt import trt_convert as trt
+from tf2trt import trt_convert as trt
 import pycuda.driver as cuda
-
-def convert_saved_model_to_engine(saved_model_dir, precision_mode='FP16', max_batch_size=1, max_workspace_size = 1 << 30):
-    print("Converting TensorFlow SavedModel to TensorRT engine. This may take a few minutes.")
-
-    # params = trt.DEFAULT_TRT_CONVERSION_PARAMS._replace(
-    #     precision_mode=precision_mode,
-    #     max_batch_size=max_batch_size
-    # )
-
-    params = trt.TrtConversionParams(
-        precision_mode=precision_mode,
-        max_batch_size=max_batch_size,
-        max_workspace_size_bytes=max_workspace_size,
-    )
-
-    converter = trt.TrtGraphConverterV2(
-        input_saved_model_dir=saved_model_dir,
-        conversion_params=params
-    )
-
-    converter.convert()
-    converter.summary()
-    converter.save(saved_model_dir)
-    print("Completed building Engine.")
-
-saved_model_dir = input("Enter the path of the TensorFlow SavedModel directory: ")
-precision = input("Enter the precision (FP32/FP16): ") # INT8 later
-batch_size = int(input("Enter the maximum batch size: "))
+import pycuda.autoinit
+import numpy as np
 
 def get_max_memory():
-    cuda.init()
     total, free = cuda.mem_get_info()
     max_mem = free * 0.95
 
@@ -40,4 +14,36 @@ def get_max_memory():
     print(f"Max memory to use: {max_mem / (1024**2)} MB")
     return max_mem
 
-convert_saved_model_to_engine(saved_model_dir, precision, batch_size, get_max_memory())
+def convert_tf_to_trt(model_path='./model.pb', output_path='./model_trt.trt', FP16_mode=True, batch_size=1, input_shape=(1, 3, 224, 224)):
+    # params = trt.DEFAULT_TRT_CONVERSION_PARAMS._replace(max_workspace_size_bytes=(1<<30))
+    params = trt.TrtConversionParams(
+        precision_mode='FP16',
+        max_batch_size=batch_size,
+        max_workspace_size_bytes=get_max_memory(),
+    )
+
+    print("Loading the TensorFlow model")
+    converter = trt.TrtGraphConverterV2(
+        input_saved_model_dir=model_path,
+        conversion_params=params
+    )
+    
+    print("Building TensorRT engine. This may take a few minutes.")
+    converter.convert()
+    
+    print("Engine built successfully")
+    converter.summary()
+    
+    print(f"Converted TensorRT engine saved at {output_path}")    
+    converter.save(output_path)
+
+if __name__ == "__main__":
+    print("Usage: python3 TensorFlow_TensorRT.py <model_path> <output_path> FP16_mode batch_size input_shape")
+    print("Example: python3 TensorFlow_TensorRT.py ./model.pb ./model_trt.trt True 1 (1, 3, 224, 224)")
+    
+    if len(sys.argv) < 2:
+        convert_tf_to_trt()
+    else:
+        for i in range(len(sys.argv), 6):
+            sys.argv.append(None)
+            convert_tf_to_trt(*sys.argv[1:6])
