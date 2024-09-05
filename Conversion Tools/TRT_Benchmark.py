@@ -1,8 +1,10 @@
-import sys
+import argparse
 import tensorrt as trt
 import pycuda.driver as cuda
 import pycuda.autoinit  # Automatically initializes CUDA driver
-import numpy as np
+# import numpy as np
+import time
+import torch
 
 # allocates input/ouput buffers for the TensorRT engine inference
 def allocate_buffers(engine):
@@ -90,3 +92,35 @@ if __name__ == "__main__":
         for i in range(len(sys.argv), 5):
             sys.argv.append(None)
             test_trt_engine(*sys.argv[1:5])
+
+
+def benchmark_trt_model(trt_engine_path):
+    TRT_LOGGER = trt.Logger(trt.Logger.WARNING)
+    with open(trt_engine_path, 'rb') as f, trt.Runtime(TRT_LOGGER) as runtime:
+        engine = runtime.deserialize_cuda_engine(f.read())
+    
+    context = engine.create_execution_context()
+    
+    # Example input
+    input_shape = (1, 3, 224, 224)
+    input_data = torch.randn(input_shape).cuda()
+
+    # Allocate buffers
+    inputs, outputs, bindings = [], [], []
+    for binding in engine:
+        size = trt.volume(engine.get_binding_shape(binding)) * engine.max_batch_size
+        dtype = trt.nptype(engine.get_binding_dtype(binding))
+        host_mem = torch.empty(size, dtype=torch.float32).cuda()
+        inputs.append(host_mem)
+        bindings.append(int(host_mem.data_ptr()))
+
+    # Execute inference
+    start_time = time.time()
+    context.execute_v2(bindings=bindings)
+    end_time = time.time()
+
+    # Report time
+    latency = end_time - start_time
+    print(f"Model Inference Time: {latency * 1000:.2f} ms")
+
+benchmark_trt_model(args.model)

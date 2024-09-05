@@ -1,4 +1,4 @@
-import sys
+import argparse
 import tensorflow as tf
 from tf2trt import trt_convert as trt
 import pycuda.driver as cuda

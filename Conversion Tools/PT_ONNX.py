@@ -1,11 +1,8 @@
 import sys
-
 import torch
 import torch.onnx
-
 import onnx
 # import onnxruntime as ort
-
 import numpy as np
 import pycuda.driver as cuda
 

@@ -1,12 +1,9 @@
 import sys
-
 import tensorflow as tf
 import tf2onnx
 # from tensorflow.python.tools import optimize_for_inference_lib
-
 import onnx
 # import onnxruntime as ort
-
 import numpy as np
 import pycuda.driver as cuda
 

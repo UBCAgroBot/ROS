@@ -1,4 +1,4 @@
-import sys
+import argparse
 import onnx
 import tensorrt as trt
 import pycuda.driver as cuda
