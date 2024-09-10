@@ -18,6 +18,8 @@ on:
           - pytorch-to-onnx-to-trt
           - tensorflow-to-onnx-to-trt
 
+# refine default args after argparse + successful testing
+
 jobs:
   convert-model:
     runs-on: self-hosted

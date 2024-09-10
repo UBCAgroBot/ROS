@@ -36,7 +36,8 @@ RUN pip3 install --upgrade --no-cache-dir --verbose \
     albumentations \
     onnx \
     onnxruntime \
-    tensorflow-cpu \
+    # tensorflow-cpu \
+    tensorflow-cpu-aws \
     torch --extra-index-url https://download.pytorch.org/whl/cpu
 
 # Expose port for Jupyter Notebook

@@ -84,8 +84,3 @@ if __name__ == "__main__":
 
     model_path = sys.argv[1]
     convert_tf_to_onnx(model_path)
-
-# improvements:
-# Model Pruning: Pruning is a technique in deep learning where you remove the weights of certain neurons which are less important. This can help in reducing the size of the model and hence improve the performance during conversion.
-# Quantization: Quantization is a process that reduces the numerical precision of the model's weights, which can lead to a significant reduction in both the memory requirement and computational cost of the model.
-# Use the Latest ONNX Opset Version: The ONNX opset version corresponds to the set of operators and their versions supported. Newer opset versions can have optimizations that were not available in previous versions. You can set the opset version with the opset parameter in tf2onnx.convert.from_graph_def.

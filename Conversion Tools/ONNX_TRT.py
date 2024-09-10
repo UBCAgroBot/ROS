@@ -55,6 +55,27 @@ def convert_onnx_to_trt(model_path="./model.onnx", output_path="model_trt.trt", 
     print(f"Converted TensorRT engine saved at {output_path}")    
     return engine, TRT_LOGGER
 
+# def build_engine(self, onnx_file_path):
+#     TRT_LOGGER = trt.Logger(trt.Logger.WARNING)
+#     with trt.Builder(TRT_LOGGER) as builder, \
+#             builder.create_network(1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH)) as network, \
+#             trt.OnnxParser(network, TRT_LOGGER) as parser:
+
+#         with open(onnx_file_path, 'rb') as model:
+#             if not parser.parse(model.read()):
+#                 for error in range(parser.num_errors):
+#                     self.get_logger().error(parser.get_error(error))
+#                 return None
+
+#         config = builder.create_builder_config()
+#         config.max_workspace_size = 1 << 30  # 1GB
+#         builder.max_batch_size = 1
+
+#         engine = builder.build_engine(network, config)
+#         with open("model.trt", "wb") as f:
+#             f.write(engine.serialize())
+#         return engine
+
 
 if __name__ == "__main__":
     print("Usage: python3 Onnx_TensorRT.py <model_path> <output_path> FP16_mode batch_size input_shape")
@@ -66,12 +87,3 @@ if __name__ == "__main__":
         for i in range(len(sys.argv), 6):
             sys.argv.append(None)
             convert_onnx_to_trt(*sys.argv[1:6])
-
-# improvements
-# Use Dynamic Shapes: If your model supports it, using dynamic input shapes can improve the inference speed. This allows TensorRT to optimize the execution plan based on the actual input shapes at runtime.
-# Use Streams for Concurrent Execution: If you are running multiple inferences concurrently, you can use CUDA streams to overlap the computation and data transfer of different inferences.
-# Use TensorRT's Optimized Layers: Whenever possible, use TensorRT's optimized layers instead of custom layers. TensorRT has highly optimized implementations for many common layers.
-# Enable Layer Fusion: Layer fusion combines multiple layers into a single operation, which can reduce memory access and improve speed. This is automatically done by TensorRT during the optimization process.
-# Enable Kernel Auto-Tuning: TensorRT automatically selects the best CUDA kernels for the layers in your model. This process can take some time during the first run, but the results are cached and used for subsequent runs.
-# Free GPU Memory After Use: After you are done with a TensorRT engine, you should free its memory to make it available for other uses. In Python, you can do this by deleting the engine and calling gc.collect().
-# Use Streams for Concurrent Execution: If you are running multiple inferences concurrently, you can use CUDA streams to overlap the computation and data transfer of different inferences. This can reduce the peak memory usage.
