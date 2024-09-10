@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>node_test</name>
+  <version>0.0.1</version>
+  <description>ROS2 Pure Python MVP</description>
+  <maintainer email="ishaandatta737@gmail.com">Ishaan Datta</maintainer>
+  <license>Apache License 2.0</license>
+
+  <buildtool_depend>ament_python</buildtool_depend>
+
+  <build_depend>builtin_interfaces</build_depend>
+  <build_depend>std_msgs</build_depend>
+  
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>builtin_interfaces</exec_depend>
+  <exec_depend>cv_bridge</depend>
+  <exec_depend>numpy</depend>
+  <exec_depend>opencv-python</depend>
+  <exec_depend>pycuda</depend>
+  <exec_depend>tensorrt</depend>
+
+  <!-- <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend> -->
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

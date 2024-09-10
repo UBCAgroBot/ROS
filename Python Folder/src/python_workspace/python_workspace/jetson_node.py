@@ -13,7 +13,6 @@ from rclpy.executors import MultiThreadedExecutor
 from sensor_msgs.msg import Image
 from std_msgs.msg import Header, String
 from cv_bridge import CvBridge, CvBridgeError
-from node_test.msg import BoundingBoxes, BoundingBox
 
 class JetsonNode(Node):
     def __init__(self):
@@ -21,7 +20,7 @@ class JetsonNode(Node):
         self.declare_parameter('engine_path', '.../assets/model.trt')
 
         self.camera_subscriber = self.create_subscription(Image, 'image_data', self.callback, 10)
-        self.bbox_publisher = self.create_publisher(BoundingBoxes, 'bounding_boxes', 10)
+        self.bbox_publisher = self.create_publisher(String, 'bounding_boxes', 10)
         self.bridge = CvBridge()
         self.engine = self.load_engine(self.engine_path)
         self.context = self.engine.create_execution_context()
@@ -99,17 +98,15 @@ class JetsonNode(Node):
         output = np.array(self.h_output).reshape(-1, 7)  # Reshape the output tensor to a 2D array
         self.get_logger().info(f'Detected bounding boxes: {output}')
         
-        boxes_list = BoundingBoxes()
+        msg_list = []
         for detection in output:
-        # should hard threshold the confidence later
-        # if detection[2] >= 0.5: # confidence threshold should be parameter later
-            box = BoundingBox()
-            # upper left corner
-            box.x_min, box.y_min, box.width, box.height = detection[3:7]  # Assume these are the bbox coordinates or [:5]
-            box.confidence = detection[2]
-            boxes_list.boxes.append(box)
-
-        self.bbox_publisher.publish(boxes_list)
+            x_min, y_min, width, height = detection[3:7]  # Assume these are the bbox coordinates or [:5]
+            # confidence = detection[2]
+            msg = String()
+            msg.join([str(x_min), str(y_min), str(width), str(height)], ',')
+            msg_list.boxes.append(msg)
+        
+        self.bbox_publisher.publish(msg_list.join(';'))
 
 def main(args=None):
     rclpy.init(args=args)

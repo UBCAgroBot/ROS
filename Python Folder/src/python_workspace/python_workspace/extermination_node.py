@@ -8,37 +8,32 @@ from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 from sensor_msgs.msg import Image
 from std_msgs.msg import Header, String, Integer
-from node_test.msg import BoundingBox, BoundingBoxes
-from std_msgs.msg import Int8
 from cv_bridge import CvBridge, CvBridgeError
 
-LIGHT_GREEN = (78, 158, 124)
-DARK_GREEN = (60, 255, 255)
-
-LATENCY = 0.1 # should be in seconds
-# assumed velocity is in meters per second
-# need constant to multiply by velocity to get pixel distance
-
-MIN_AREA = 100
-
-ROI_X = 0
-ROI_Y = 0
-ROI_W = 100
-ROI_H = 100
-
-MIN_CONFIDENCE = 0.5
-
-# should have flag to output the bounding box results to display node
-# update rate and publish rate as parameters
-# publish rate is taken as parameter for timer
 class ExterminationNode(Node):
     def __init__(self):
         super().__init__('extermination_node')
+        self.declare_parameter('use_display_node', True)
+        self.declare_parameter('lower_range', [78, 158, 124])
+        self.declare_parameter('upper_range', [60, 255, 255])
+        self.declare_parameter('min_area', 100)
+        self.declare_parameter('min_confidence', 0.5)
+        self.declare_parameter('roi_list', [0,0,100,100])
+        self.declare_parameter('publish_rate', 10)
+        
+        self.use_display_node = self.get_parameter('use_display_node').get_parameter_value().bool_value
+        self.lower_range = self.get_parameter('lower_range').get_parameter_value().integer_array_value
+        self.upper_range = self.get_parameter('upper_range').get_parameter_value().integer_array_value
+        self.min_area = self.get_parameter('min_area').get_parameter_value().integer_value
+        self.min_confidence = self.get_parameter('min_confidence').get_parameter_value().double_value
+        self.roi_list = self.get_parameter('roi_list').get_parameter_value().integer_array_value
+        self.publish_rate = self.get_parameter('publish_rate').get_parameter_value().integer_value
+        
         self.subscription_img = self.create_subscription(Image, 'image', self.image_callback, 10)
-        self.subscription_bbox = self.create_subscription(BoundingBoxes, 'bounding_boxes', self.bbox_callback, 10)
+        self.subscription_bbox = self.create_subscription(String, 'bounding_boxes', self.bbox_callback, 10)
         self.timer = self.create_timer(0.1, self.timer_callback)
-        self.left_array_publisher = self.create_publisher(Integer, 'left_array_data', 10)
-        self.right_array_publisher = self.create_publisher(Integer, 'right_array_data', 10)
+        self.left_array_publisher = self.create_publisher(Integer, 'left_array_data', self.publish_rate)
+        self.right_array_publisher = self.create_publisher(Integer, 'right_array_data', self.publish_rate)
         self.bridge = CvBridge()
         self.left_image, self.right_image = None, None
         self.left.on, self.right.on = 0, 0
@@ -46,10 +41,10 @@ class ExterminationNode(Node):
         self.left_velocity, self.right_velocity = 0, 0
         self.left_x1, self.left_y1, self.left_x2, self.left_y2 = 0, 0, 0, 0
         self.right_x1, self.right_y1, self.right_x2, self.right_y2 = 0, 0, 0, 0
-        self.fps, self.last_time = 0.0, time.time()
+        self.fps, self.last_time, self.latency = 0.0, time.time(), 0.1
+        self.roi_x, self.roi_y, self.roi_w, self.roi_h = self.roi_list
         
-        flag = False
-        if flag:
+        if self.use_display_node:
             self.window1 = "Left Camera"
             self.window2 = "Right Camera"
             cv2.namedWindow(self.window1)
@@ -59,26 +54,26 @@ class ExterminationNode(Node):
         if msg.header.side == "left":
             self.left_image = self.bridge.imgmsg_to_cv2(msg, "rgb8")
             # self.left_velocity = msg.header.velocity
-            # self.left_x1 = ROI_X + (self.left_velocity[0] * LATENCY)
-            # self.left_y1 = ROI_Y + (self.left_velocity[1] * LATENCY)
-            # self.left_x2 = self.left_x1 + ROI_W
-            # self.left_y2 = self.left_y1 + ROI_H
+            # self.left_x1 = self.roi_x + (self.left_velocity[0] * self.latency)
+            # self.left_y1 = self.roi_y + (self.left_velocity[1] * self.latency)
+            # self.left_x2 = self.left_x1 + self.roi_w
+            # self.left_y2 = self.left_y1 + self.roi_h
         else:
             self.right_image = self.bridge.imgmsg_to_cv2(msg, "rgb8")
             # self.right_velocity = msg.header.velocity
             # self.right_velocity = msg.header.velocity
-            # self.right_x1 = ROI_X - (self.right_velocity[0] * LATENCY)
-            # self.right_y1 = ROI_Y - (self.right_velocity[1] * LATENCY)
-            # self.right_x2 = self.right_x1 + ROI_W
-            # self.right_y2 = self.right_y1 + ROI_H
+            # self.right_x1 = self.roi_x - (self.right_velocity[0] * self.latency)
+            # self.right_y1 = self.roi_y - (self.right_velocity[1] * self.latency)
+            # self.right_x2 = self.right_x1 + self.roi_w
+            # self.right_y2 = self.right_y1 + self.roi_h
         self.get_logger().info(f"Received {msg.header.side} image data")
 
     def bbox_callback(self, msg):
         if msg.header.side == "left":
-            self.left_boxes = BoundingBox(msg.boxes)
+            self.left_boxes = (msg.data).split(";")
             self.process_data("left")
         else:
-            self.right_boxes = BoundingBox(msg.boxes)
+            self.right_boxes = (msg.data).split(";")
             self.process_data("right")
         self.get_logger().info(f"Received {msg.header.side} bounding box data")
 
@@ -90,7 +85,6 @@ class ExterminationNode(Node):
         self.left_array_publisher.publish(Lmsg)
         self.right_array_publisher.publish(Rmsg)
 
-    # assume at this point the image has been received
     def process_data(self, side):
         if side == "left":
             image = self.left_image
@@ -102,9 +96,9 @@ class ExterminationNode(Node):
         if image is not None and boxes is not None:
             for box in boxes:
                 # hard confidence filter
-                if box.confidence > MIN_CONFIDENCE:
-                    bounding_box = (box.x, box.y, box.w, box.h)
-                    self.object_filter(image, bounding_box, side)
+                # if box.confidence > self.min_confidence:
+                bounding_box = box.split(",")
+                self.object_filter(image, bounding_box, side)
 
     # creates a color segmentation mask and filters small areas
     # ROI is the bounding box of the object (screening objects)
@@ -116,7 +110,7 @@ class ExterminationNode(Node):
 
         # Apply color segmentation mask
         hsv = cv2.cvtColor(roi, cv2.COLOR_RGB2HSV)
-        mask = cv2.inRange(hsv,LIGHT_GREEN,DARK_GREEN)
+        mask = cv2.inRange(hsv,tuple(self.lower_range),tuple(self.upper_range))
         # result = cv2.bitwise_and(self.image,self.image, mask=mask) 
         
         # Find contours to create bounding boxes from the mask
@@ -126,16 +120,15 @@ class ExterminationNode(Node):
         for cnt in contours:
             # Calculate area and remove small elements
             area = cv2.contourArea(cnt)
-            if area > MIN_AREA:
+            if area > self.min_area:
                 x, y, w, h = cv2.boundingRect(cnt)
                 detections.append((x, y, x + w, y + h))
         
         # !!! need to transform from roi coordinates to image coordinates
         # (relative to the image instead of the bounding)
         
-        # here we can can add function call to display
-        # if flag is set:
-        # self.display(roi, detections)
+        # if self.use_display_node:
+        #     self.display(roi, detections, side)
         
         for detection in detections:
             self.verify_object(detection, side)
@@ -155,7 +148,7 @@ class ExterminationNode(Node):
             roi_x2 = self.right_x2
             roi_y2 = self.right_y2
         
-        if x1 >= roi_x1 and x1 <= roi_x2 and y1 >= roi_y1 and y1 <= roi_y2:
+        if x1 >= roi_x1 and x2 <= roi_x2 and y1 >= roi_y1 and y2 <= roi_y2:
             if side == "left":
                 self.left.on = 1
             else:
