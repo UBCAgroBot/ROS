@@ -56,7 +56,7 @@ def checkConfidenceConsistency(predictions_original, converted_results, toleranc
 
     print("All confidence percentages are consistent")
 
-def convert_pytorch_to_onnx(model_path="./model.pt", output_path="./model.onnx", input_shape=(1,3,224,224), constant_folding=False):
+def convert_pytorch_to_onnx(model_path="./model.pt", output_path="./model.onnx", input_shape=(1, 3, 448, 1024), constant_folding=False):
     print("Loading the PyTorch model")
     model = torch.load(model_path)
     model.eval()
