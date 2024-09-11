@@ -1,8 +1,8 @@
 import argparse
 import torch
 from torch2trt import torch2trt
-import pycuda.driver as cuda
-import pycuda.autoinit
+# import pycuda.driver as cuda
+# import pycuda.autoinit
 import numpy as np
 
 def get_max_memory():
@@ -21,7 +21,7 @@ def convert_pt_to_trt(model_path='./model.pt', output_path='./model_trt.trt', FP
 
     input_data = torch.randn(input_shape).cuda()
     print("Building TensorRT engine. This may take a few minutes.")
-    model_trt = torch2trt(model, [input_data], fp16_mode=FP16_mode, max_batch_size=batch_size, max_workspace_size=get_max_memory())
+    model_trt = torch2trt(model, [input_data], fp16_mode=FP16_mode, max_batch_size=batch_size, max_workspace_size=15000000000) # get_max_memory()
     # torch.save(model_trt.state_dict(), output_file)
 
     with open(output_path, 'wb') as f:
