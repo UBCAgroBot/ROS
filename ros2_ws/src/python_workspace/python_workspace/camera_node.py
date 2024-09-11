@@ -98,7 +98,7 @@ class CameraNode(Node):
             
         cap.release()
     
-    def camera_publisher(self):
+    def publish_zed_frames(self):
         # Create a ZED camera object
         zed = sl.Camera()
         
@@ -133,7 +133,7 @@ class CameraNode(Node):
             if err == sl.ERROR_CODE.SUCCESS:
                 self.index += 1
                 tic = time.perf_counter()
-                zed.retrieve_image(image_zed, sl.VIEW.LEFT_UNRECTIFIED, sl.MEM.GPU, image_size)
+                zed.retrieve_image(image_zed, sl.VIEW.LEFT_UNRECTIFIED, sl.MEM.CPU, image_size)
                 zed.get_sensors_data(sensors_data, sl.TIME_REFERENCE.IMAGE)
                 accel_data = sensors_data.get_imu_data().get_linear_acceleration()
                 
