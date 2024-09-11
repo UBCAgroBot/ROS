@@ -18,8 +18,9 @@ class JetsonNode(Node):
     def __init__(self):
         super().__init__('jetson_node')
         self.declare_parameter('engine_path', '.../assets/model.trt')
+        self.engine_path = self.get_parameter('engine_path').get_parameter_value().string_value
 
-        self.camera_subscriber = self.create_subscription(Image, 'image_data', self.callback, 10)
+        self.camera_subscriber = self.create_subscription(Image, 'image_data', self.image_callback, 10)
         self.bbox_publisher = self.create_publisher(String, 'bounding_boxes', 10)
         self.bridge = CvBridge()
         self.engine = self.load_engine(self.engine_path)
@@ -57,7 +58,7 @@ class JetsonNode(Node):
         # Create a CUDA stream for async execution
         self.stream = cuda.Stream()
     
-    def listener_callback(self, msg):
+    def image_callback(self, msg):
         now = self.get_clock().now()
         self.get_logger().info(f"Received: {msg.header.frame_id}")
         latency = now - Time.from_msg(msg.header.stamp)

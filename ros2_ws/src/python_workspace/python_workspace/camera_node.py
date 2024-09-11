@@ -152,12 +152,12 @@ class CameraNode(Node):
                 gpu_image.upload(cv_image)
                 
                 # Transform to BGR8 format and resize using CUDA 
-                cv2.cuda.cvtColor(gpu_image, cv2.COLOR_BGR2RGB)
+                cv2.cuda.cvtColor(gpu_image, cv2.COLOR_BGRA2RGB)
                 cv2.cuda.resize(gpu_image, self.dimensions)
                 
                 # Convert the image to float32
-                image_gpu = image_gpu.transpose((2, 0, 1)).astype(np.float32)
-                image_gpu = np.expand_dims(image_gpu, axis=0)
+                # gpu_image = gpu_image.transpose((2, 0, 1)).astype(np.float32)
+                # gpu_image = np.expand_dims(gpu_image, axis=0)
                 
                 # # Transpose the image
                 # image_gpu = cv2.cuda.transpose(image_gpu)
@@ -194,7 +194,7 @@ class CameraNode(Node):
             image = gpu_image.download() # does this update outside scope?
 
         try:
-            image_msg = self.bridge.cv2_to_imgmsg(image, encoding='rgb8')
+            image_msg = self.bridge.cv2_to_imgmsg(image, encoding='8UC4') # rgb8
         except CvBridgeError as e:
             print(e)
             
@@ -202,7 +202,7 @@ class CameraNode(Node):
         image_msg.is_bigendian = 0 
         image_msg.step = image_msg.width * 3
 
-        self.model_publisher.publish(image_msg)
+        self.publisher.publish(image_msg)
         size = sys.getsizeof(image_msg)
         self.get_logger().info(f'Published image frame: {self.index} with message size {size} bytes')
         time.sleep(1.0 / self.frame_rate) # delay to control framerate
