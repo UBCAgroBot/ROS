@@ -16,11 +16,6 @@
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>builtin_interfaces</exec_depend>
-  <exec_depend>cv_bridge</depend>
-  <exec_depend>numpy</depend>
-  <exec_depend>opencv-python</depend>
-  <exec_depend>pycuda</depend>
-  <exec_depend>tensorrt</depend>
 
   <export>
     <build_type>ament_python</build_type>
