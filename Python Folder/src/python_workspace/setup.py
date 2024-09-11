@@ -14,9 +14,7 @@ setup(
     install_requires=[
         'setuptools',
         'rclpy', 
-        'cv_bridge', 
         'numpy', 
-        'opencv-python', 
         'pycuda', 
         'tensorrt'
     ],
@@ -25,7 +23,6 @@ setup(
     maintainer_email='ishaandatta737@gmail.com',
     description='Experimental ROS 2 Python Package',
     license='Apache License 2.0',
-    tests_require=['pytest'],
     entry_points={
         'console_scripts': [
             'camera_node = python_workspace.camera_node:main',
