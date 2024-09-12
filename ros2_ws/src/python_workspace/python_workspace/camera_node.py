@@ -34,7 +34,7 @@ class CameraNode(Node):
         
         # width is 448?
         if self.get_parameter('model_type').get_parameter_value().string_value == 'maize':
-            self.dimensions = (1024, 448)
+            self.dimensions = (640, 640) # 448, 1014
         elif self.get_parameter('model_type').get_parameter_value().string_value == 'weed':
             self.dimensions = (1024, 448)
         else:
@@ -101,7 +101,6 @@ class CameraNode(Node):
     def publish_zed_frames(self):
         # Create a ZED camera object
         zed = sl.Camera()
-        
         # Set configuration parameters
         init = sl.InitParameters()
         init.camera_resolution = sl.RESOLUTION.HD1080 # HD720
@@ -117,12 +116,7 @@ class CameraNode(Node):
         
         # Set runtime parameters after opening the camera
         runtime = sl.RuntimeParameters()
-        
-        # Prepare new image size to retrieve half-resolution images
-        image_size = zed.get_camera_information().camera_configuration.resolution
-        # image_size.width = image_size.width /2 # can we set any arbitary resolution here, instead of resizing later?
-        # image_size.height = image_size.height /2
-        image_zed = sl.Mat(image_size.width, image_size.height, sl.MAT_TYPE.U8_C3)
+        image_zed = sl.Mat()
         
         sensors_data = sl.SensorsData()
         previous_velocity = np.array([0.0, 0.0, 0.0])
@@ -133,7 +127,7 @@ class CameraNode(Node):
             if err == sl.ERROR_CODE.SUCCESS:
                 self.index += 1
                 tic = time.perf_counter()
-                zed.retrieve_image(image_zed, sl.VIEW.LEFT_UNRECTIFIED, sl.MEM.CPU, image_size)
+                zed.retrieve_image(image_zed, sl.VIEW.LEFT_UNRECTIFIED)
                 zed.get_sensors_data(sensors_data, sl.TIME_REFERENCE.IMAGE)
                 accel_data = sensors_data.get_imu_data().get_linear_acceleration()
                 
@@ -145,15 +139,15 @@ class CameraNode(Node):
                 previous_velocity = velocity
                 previous_time = current_time
                 
-                cv_image = image_zed.get_data()  
-            
+                cv_image = image_zed.get_data()              
                 # Upload the ZED image to CUDA
                 gpu_image = cv2.cuda_GpuMat()
                 gpu_image.upload(cv_image)
                 
                 # Transform to BGR8 format and resize using CUDA 
-                cv2.cuda.cvtColor(gpu_image, cv2.COLOR_BGRA2RGB)
-                cv2.cuda.resize(gpu_image, self.dimensions)
+                gpu_image = cv2.cuda.cvtColor(gpu_image, cv2.COLOR_RGBA2RGB)
+                # crop to ROI and resize
+                gpu_image = cv2.cuda.resize(gpu_image, self.dimensions)
                 
                 # Convert the image to float32
                 # gpu_image = gpu_image.transpose((2, 0, 1)).astype(np.float32)
@@ -166,10 +160,10 @@ class CameraNode(Node):
                 # cv2.cuda.copyMakeBorder(image_gpu, 0, 1, 0, 0, cv2.BORDER_CONSTANT, image_gpu)
                 
                 # Download the processed image from GPU to CPU memory
-                image_bgr = gpu_image.download()
+                rgb_image = gpu_image.download()
                 toc = time.perf_counter_ns()
                 # self.preprocessing_time = (toc - tic)/1e6
-                self.publish_image(image_bgr)
+                self.publish_image(rgb_image)
             else:
                 self.get_logger().error("Failed to grab ZED camera frame: {str(err)}")
 
@@ -178,23 +172,10 @@ class CameraNode(Node):
 
     def publish_image(self, image):
         header = Header()
-        header.stamp = self.get_clock().now().to_msg() # maybe use ros time
+        header.stamp = self.get_clock().now().to_msg()
         header.frame_id = str(self.index) 
-        # header.side = 'left' if self.index % 2 == 0 else 'right'
-        
-        if self.source_type != 'zed':
-            # Use CUDA for loading and processing the image
-            gpu_image = cv2.cuda_GpuMat()
-            gpu_image.upload(image)
-            
-            # Convert to BGR8 format and resize using CUDA
-            cv2.cuda.cvtColor(image, cv2.COLOR_BGR2RGB)
-            cv2.cuda.resize(gpu_image, self.dimensions)
-            
-            image = gpu_image.download() # does this update outside scope?
-
         try:
-            image_msg = self.bridge.cv2_to_imgmsg(image, encoding='8UC4') # rgb8
+            image_msg = self.bridge.cv2_to_imgmsg(image, encoding="rgb8") 
         except CvBridgeError as e:
             print(e)
             

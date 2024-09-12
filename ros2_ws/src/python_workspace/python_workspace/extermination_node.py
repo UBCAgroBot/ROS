@@ -2,6 +2,7 @@ import time, sys, os
 import cv2
 import numpy as np
 # from tracker import *
+# add object counter
 
 import rclpy
 from rclpy.node import Node
