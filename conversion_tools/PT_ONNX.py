@@ -1,96 +1,76 @@
-import sys
+import os
+import time
+import argparse
 import torch
 import torch.onnx
 import onnx
-# import onnxruntime as ort
 import numpy as np
-
+from ultralytics import YOLO
 OPSET_VERS = 13
 
-# netowrk is the model
-# network.eval()
-# torch_out_load = network(example_data)
-# mct.torch_to_onnx(network, example_data, "torch_model.onnx")
-# ort_session = mct.loadOnnxModel("torch_model.onnx")
-# ort_predictions = mct.predictOnnx(example_data.numpy(), session=ort_session)
-# ort_predictions[0][0] = 3
-# mct.checkPredictionConsistency(torch_out_load.detach().numpy(), ort_predictions)
-# mct.checkConfidenceConsistency(torch_out_load.detach().numpy(), ort_predictions)
-
-# given an array of test inputs and a path to onnx model or a session returns the predictions
-def predictOnnx(x_test,session=None,dest_path=""):
-    if session is None and dest_path == "":
-        raise ValueError("No model or path provided, please specifiy one of them.")
-    if session is None:
-        session = loadOnnxModel(dest_path)
-
-    results_ort = session.run([out.name for out in session.get_outputs()], {session.get_inputs()[0].name: x_test})
-    return np.array(results_ort[0])
-
-# given the predictions from the original model and the converted model, check if they are consistent
-# shape of predictions_original and converted_results should be the same
-# only checks for the predicted class (aka the argmax)
-# takes in two 2D arrays: first dimension is the number of samples,  second dimension is the number of classes and values correspond to confidence
-def checkPredictionConsistency(predictions_original, converted_results):
-    for n in range(predictions_original.shape[0]):
-        if np.argmax(predictions_original[n]) != np.argmax(converted_results[n]):
-            print(f"Original: {np.argmax(predictions_original[n])}, ONNX: {np.argmax(converted_results[n])}")
-            print(f"{predictions_original[n]}, \n{converted_results[n]}")
-            print("=====================================")
-            raise ValueError("Predictions are not consistent")
-
-    print("All predictions are consistent")
-
-# given the predictions from the original model and the converted model, check if they are consistent
-# shape of predictions_original and converted_results should be the same
-# only checks for the difference in confidence
-# takes in two 2D arrays: first dimension is the number of samples,  second dimension is the number of classes and values correspond to confidence
-# tolerance: the maximum difference in confidence that is allowed
-def checkConfidenceConsistency(predictions_original, converted_results, tolerance=1e-5):
-    np.testing.assert_allclose(predictions_original, converted_results,atol=tolerance)
-    # for n in range(predictions_original.shape[0]):
-    #     if not np.allclose(predictions_original[n], converted_results[n], atol=tolerance):
-    #         print(f"Original: \t {predictions_original[n]}, \nONNX: \t{converted_results[n]}")
-    #         print("=====================================")
-    #         return
-
-    print("All confidence percentages are consistent")
-
-def convert_pytorch_to_onnx(model_path="./model.pt", output_path="./model.onnx", input_shape=(1, 3, 448, 1024), constant_folding=False):
+def convert_pytorch_to_onnx(model_path="/home/user/Downloads/model.pt", output_path="/home/user/Downloads/model.onnx", FP16_mode=False, constant_folding=False, gs_optimize=False, model_dimensions=None, verify=True, verbose=False):
+    if not os.path.exists(model_path):
+        raise ValueError(f"Model file not found at {model_path}")
+    if not output_path.endswith(".onnx"):
+        raise ValueError("Output path should end with .onnx")
+    if verify and model_dimensions is None:
+        raise ValueError("Model dimensions are required for verification")
+    
     print("Loading the PyTorch model")
-    model = torch.load(model_path)
-    model.eval()
-    # traced_model = torch.jit.trace(model, torch.randn(input_shape))
+    model = YOLO(model_path)
     
-    input_data = torch.randn(input_shape).cuda()
+    model.eval().cuda()
+    input_data = torch.randn(model_dimensions).cuda()
     
-    print("Exporting model to ONNX format")
+    if FP16_mode:
+        model.half()
+        input_data.half()
+    
+    tic = time.perf_counter_ns()
+    torch_out = model(input_data)
+    toc = time.perf_counter_ns()
+
+    # names might be wrong
+    print("Exporting model to ONNX format") 
     torch.onnx.export(model, input_data, output_path, 
-                        verbose=True, 
+                        verbose=verbose, 
                         opset_version=OPSET_VERS, 
                         export_params=True,
                         do_constant_folding=constant_folding,
                         input_names = ['input'], 
                         output_names = ['output'], 
-                        dynamic_axes={'input' : {0 : 'batch_size'}, 
-                                    'output' : {0 : 'batch_size'}}
                         )
     
     model = onnx.load(output_path)
     onnx.checker.check_model(model)
-    print("Model converted successfully")
+    
+    if gs_optimize:
+        from ONNX_GS import optimize_onnx
+        output_path = optimize_onnx(output_path)
+    
     print(model.graph)
+    print("Model converted successfully")
+    
+    if verify:
+        print("PyTorch inference time:", (toc - tic) / 1e6, "ms")
+        from ONNX_Verify import verify_onnx
+        verify_onnx(model_path, np.array(torch_out), model_dimensions) # torch.out.numpy()
     
     print(f"Converted ONNX model saved at {output_path}")
-    # return loadOnnxModel(output_path)
-
-def loadOnnxModel(path, providers=["CUDAExecutionProvider"]):
-    return ort.InferenceSession(path,providers=providers)
+    return
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python convert_to_trt.py <model_path>")
-        sys.exit(1)
-
-    model_path = sys.argv[1]
-    convert_pytorch_to_onnx(model_path)
+    print("Usage: python3 PT_ONNX.py --model_path=/home/user/Downloads/model.onnx --output_path=/home/user/Downloads/model.engine --FP16=False --constant_folding=True --gs_optimize=False --model_dimensions=(1, 3, 448, 1024) --verify=True --verbose=False")
+    
+    parser = argparse.ArgumentParser(description='Convert PyTorch model to ONNX')
+    parser.add_argument('--model_path', type=str, default="/home/user/Downloads/model.pt", required=False, help='Path to the PyTorch model file (.pt)')
+    parser.add_argument('--output_path', type=str, default="/home/user/Downloads/model.onnx", required=False, help='Path to save the converted ONNX model file (.onnx)')
+    parser.add_argument('--FP16', type=bool, default=False, help="FP16 precision mode")
+    parser.add_argument('--constant_folding', type=bool, default=False, help="Apply constant folding opreation")
+    parser.add_argument('--gs_optimize', type=bool, default=False, help='Use ONNX GraphSurgeon to optimize model after conversion')
+    parser.add_argument('--model_dimensions', type=tuple, default=False, help="Model input dimensions")
+    parser.add_argument('--verify', type=bool, default=True, help="Verify the converted model")
+    parser.add_argument('--verbose', type=bool, default=False, help="Verbose mode")
+    args = parser.parse_args()
+    
+    convert_pytorch_to_onnx(args.model_path, args.output_path, args.FP16, args.constant_folding, args.gs_optimize, args.model_dimensions, args.verify, args.verbose)
