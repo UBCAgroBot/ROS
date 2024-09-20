@@ -1,3 +1,37 @@
+import rclpy
+from rclpy.node import Node
+from rclpy.lifecycle import LifecycleNode
+from rclpy.lifecycle import State
+
+class CameraNode(LifecycleNode):
+    def __init__(self):
+        super().__init__('camera_node')
+
+    def on_configure(self, state: State):
+        self.get_logger().info('Configuring the camera...')
+        # Initialize camera
+        return self.configure_success()
+
+    def on_activate(self, state: State):
+        self.get_logger().info('Activating the camera...')
+        # Start the camera stream
+        return self.activate_success()
+
+    def on_deactivate(self, state: State):
+        self.get_logger().info('Deactivating the camera...')
+        # Stop the camera stream
+        return self.deactivate_success()
+
+    def on_cleanup(self, state: State):
+        self.get_logger().info('Cleaning up resources...')
+        # Clean up resources
+        return self.cleanup_success()
+
+    def on_shutdown(self, state: State):
+        self.get_logger().info('Shutting down the camera...')
+        # Shut down resources
+        return self.shutdown_success()
+
 from launch import LaunchDescription
 from launch_ros.actions import LifecycleNode
 from launch.actions import EmitEvent

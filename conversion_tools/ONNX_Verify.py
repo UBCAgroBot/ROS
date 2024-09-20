@@ -21,6 +21,12 @@ def verify_onnx(model_path, compared_outputs, model_dimensions, fp_16):
 
 # any other chanes for fp_16 to work?
 def predict_onnx(model_path, fp_16, input_shape):
+    
+    # random_input = np.random.randn(*input_shape).astype(np.float32)
+
+    # # Run inference with ONNX
+    # input_name = onnx_session.get_inputs()[0].name
+    # onnx_output = onnx_session.run(None, {input_name: random_input})
     onnx_session = ort.InferenceSession(model_path,providers=["CUDAExecutionProvider"])
     
     if fp_16:

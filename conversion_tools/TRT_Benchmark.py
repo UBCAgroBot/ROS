@@ -6,6 +6,9 @@ import pycuda.autoinit  # Automatically initializes CUDA driver
 import time
 import torch
 
+## need to adapt after finalizing preprocessing/postprocessing steps
+# should also do unit testing, but toggle functionality w/ param
+
 # allocates input/ouput buffers for the TensorRT engine inference
 def allocate_buffers(engine):
     inputs = []
@@ -543,3 +546,5 @@ if __name__ == "__main__":
     ground_truth_path = "ground_truth.txt"  # Replace with your ground truth file path
 
     run_benchmark(trt_model_path, test_images, ground_truth_path)
+
+# Create performance report based on relative bounding box centroid for sample images (accuracy %, error offset %, etc.)

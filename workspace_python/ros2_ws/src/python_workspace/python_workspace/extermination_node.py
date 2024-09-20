@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 # from tracker import *
 # add object counter
+# log end to end  latency by checking time.time_now() and unpacking time from header of initial image after the extermination output is decided
 
 import rclpy
 from rclpy.node import Node
@@ -10,6 +11,9 @@ from rclpy.executors import MultiThreadedExecutor
 from sensor_msgs.msg import Image
 from std_msgs.msg import Header, String, Integer
 from cv_bridge import CvBridge, CvBridgeError
+
+import pycuda.driver as cuda
+
 
 class ExterminationNode(Node):
     def __init__(self):
@@ -29,6 +33,11 @@ class ExterminationNode(Node):
         self.min_confidence = self.get_parameter('min_confidence').get_parameter_value().double_value
         self.roi_list = self.get_parameter('roi_list').get_parameter_value().integer_array_value
         self.publish_rate = self.get_parameter('publish_rate').get_parameter_value().integer_value
+        
+        self.subscription_pointer = self.create_subscription(MemoryHandle, 'inference_done', self.postprocess_callback, 10)
+        # Ensure same CUDA context or initialize a new one if needed
+        self.cuda_driver_context = cuda.Device(0).make_context()
+        
         
         self.subscription_img = self.create_subscription(Image, 'image', self.image_callback, 10)
         self.subscription_bbox = self.create_subscription(String, 'bounding_boxes', self.bbox_callback, 10)
@@ -50,6 +59,63 @@ class ExterminationNode(Node):
             self.window2 = "Right Camera"
             cv2.namedWindow(self.window1)
             cv2.namedWindow(self.window2)
+    
+    def image_callback(self, msg):
+        self.arrival_time = Time.from_msg(msg.header.stamp)
+        image  = self.bridge.imgmsg_to_cv2(msg, desired_encoding="rgb8")
+        self.image = image
+        latency = self.get_clock().now() - Time.from_msg(msg.header.stamp)
+        self.get_logger().info(f"Latency: {latency.nanoseconds / 1e6} ms")
+        self.preprocess(image)
+
+    def postprocess_callback(self, msg):
+        ipc_handle_str = msg.ipc_handle
+        ipc_handle = cuda.IPCMemoryHandle(ipc_handle_str)
+
+        # Map the shared GPU memory using IPC handle
+        d_output = cuda.ipc_open_mem_handle(ipc_handle, cuda.mem_alloc(self.h_output.nbytes))
+
+        # Copy data from GPU memory to host
+        cuda.memcpy_dtoh(self.h_output, d_output)
+
+        # Synchronize and postprocess
+        output = np.copy(self.h_output)
+        self.stream.synchronize()
+
+        self.get_logger().info(f"Postprocessed output: {output}")
+
+        # Clean up the IPC memory
+        cuda.ipc_close_mem_handle(d_output)
+        
+        # Get the IPC handles for tensor and image
+        tensor_ipc_handle_str = msg.tensor_ipc_handle
+        image_ipc_handle_str = msg.image_ipc_handle
+
+        # Open IPC memory handles for tensor and image
+        tensor_ipc_handle = cuda.IPCMemoryHandle(tensor_ipc_handle_str)
+        image_ipc_handle = cuda.IPCMemoryHandle(image_ipc_handle_str)
+
+        d_output = cuda.ipc_open_mem_handle(tensor_ipc_handle, self.h_output.nbytes)
+        d_image = cuda.ipc_open_mem_handle(image_ipc_handle, self.cv_image.nbytes)
+
+        # Wrap the image GPU pointer into a GpuMat object for OpenCV CUDA operations
+        cv_cuda_image = cv2_cuda_GpuMat(self.cv_image.shape[0], self.cv_image.shape[1], cv2.CV_8UC3)
+        cv_cuda_image.upload(d_image)
+
+        # Perform OpenCV CUDA operations on the image (e.g., GaussianBlur)
+        blurred_image = cv2_cuda_image.gaussianBlur((5, 5), 0)
+
+        # Retrieve inference result and postprocess
+        cuda.memcpy_dtoh(self.h_output, d_output)
+        self.stream.synchronize()
+
+        output = np.copy(self.h_output)
+        self.get_logger().info(f"Postprocessed tensor: {output}")
+
+        # Clean up IPC memory handles
+        cuda.ipc_close_mem_handle(d_output)
+        cuda.ipc_close_mem_handle(d_image)
+
 
     def image_callback(self, msg):
         if msg.header.side == "left":
@@ -85,6 +151,26 @@ class ExterminationNode(Node):
         Rmsg.data = self.right.on
         self.left_array_publisher.publish(Lmsg)
         self.right_array_publisher.publish(Rmsg)
+    
+    # def nms(self, boxes, threshold=0.5):
+    #     x1 = boxes[:, 0]
+    #     y1 = boxes[:, 1]
+    #     x2 = boxes[:, 2]
+    #     y2 = boxes[:, 3]
+    #     scores = boxes[:, 4]
+        
+    #     indices = np.argsort(scores)[::-1]
+    #     keep = []
+        
+    #     while len(indices) > 0:
+    #         i = indices[0]
+    #         keep.append(i)
+            
+    #         if len(indices) == 1:
+    #             break
+            
+    #         remaining_boxes = boxes[indices[1:]]
+    #         iou_values = np.array([self.iou(boxes[i], remaining_box) for remaining_box in remaining_boxes])
 
     def process_data(self, side):
         if side == "left":
@@ -206,3 +292,151 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
+
+import cupy as cp
+
+def iou(box1, box2):
+    """Compute Intersection over Union (IoU) between two bounding boxes.
+    
+    Args:
+        box1: (x1, y1, x2, y2) format for box 1.
+        box2: (x1, y1, x2, y2) format for box 2.
+    
+    Returns:
+        IoU value between box1 and box2.
+    """
+    # Determine the coordinates of the intersection rectangle
+    x1 = cp.maximum(box1[0], box2[0])
+    y1 = cp.maximum(box1[1], box2[1])
+    x2 = cp.minimum(box1[2], box2[2])
+    y2 = cp.minimum(box1[3], box2[3])
+    
+    # Compute the area of the intersection
+    inter_area = cp.maximum(0, x2 - x1 + 1) * cp.maximum(0, y2 - y1 + 1)
+    
+    # Compute the area of both bounding boxes
+    box1_area = (box1[2] - box1[0] + 1) * (box1[3] - box1[1] + 1)
+    box2_area = (box2[2] - box2[0] + 1) * (box2[3] - box2[1] + 1)
+    
+    # Compute the IoU
+    iou_value = inter_area / (box1_area + box2_area - inter_area)
+    return iou_value
+
+def nms(boxes, threshold=0.5):
+    """Apply Non-Maximum Suppression (NMS) on bounding boxes using CUDA.
+    
+    Args:
+        boxes: Bounding boxes with shape [N, 5], where each box is [x1, y1, x2, y2, score].
+        threshold: IoU threshold for suppression.
+    
+    Returns:
+        List of indices of the boxes that are kept after NMS.
+    """
+    # Extract the coordinates and scores from the boxes
+    x1 = boxes[:, 0]
+    y1 = boxes[:, 1]
+    x2 = boxes[:, 2]
+    y2 = boxes[:, 3]
+    scores = boxes[:, 4]
+    
+    # Sort boxes by scores (descending order)
+    indices = cp.argsort(scores)[::-1]
+    
+    keep = []
+    
+    while len(indices) > 0:
+        i = indices[0]
+        keep.append(i)
+        
+        if len(indices) == 1:
+            break
+        
+        # Remaining boxes
+        remaining_boxes = boxes[indices[1:]]
+        
+        # Calculate IoU of the current box with the rest
+        iou_values = cp.array([iou(boxes[i], remaining_box) for remaining_box in remaining_boxes])
+        
+        # Suppress boxes with IoU greater than the threshold
+        remaining_indices = cp.where(iou_values <= threshold)[0]
+        
+        # Update indices to keep processing the remaining boxes
+        indices = indices[remaining_indices + 1]
+    
+    return keep
+
+# Example usage:
+
+# Suppose we have the following bounding boxes in (x1, y1, x2, y2, score) format:
+bounding_boxes = cp.array([
+    [50, 50, 150, 150, 0.9],
+    [60, 60, 160, 160, 0.85],
+    [200, 200, 300, 300, 0.75],
+    [220, 220, 320, 320, 0.7],
+])
+
+# Apply NMS with IoU threshold of 0.5
+kept_indices = nms(bounding_boxes, threshold=0.5)
+
+# Display results
+print("Kept indices:", kept_indices)
+print("Kept boxes:", bounding_boxes[kept_indices])
+
+import cv2
+import os
+
+def draw_bounding_boxes(image_path, bboxes):
+    # Read the image using OpenCV
+    img = cv2.imread(image_path)
+    
+    if img is None:
+        print(f"Error loading image: {image_path}")
+        return
+    
+    # Get the dimensions of the image
+    height, width, _ = img.shape
+    print(height)
+    print(width)
+    
+    # Draw each bounding box on the image
+    for bbox in bboxes:
+        class_id, x_center, y_center, bbox_width, bbox_height = bbox
+        
+        # Convert normalized values to absolute pixel values
+        x_center_pixel = int(x_center * width)
+        y_center_pixel = int(y_center * height)
+        bbox_width_pixel = int(bbox_width * width)
+        bbox_height_pixel = int(bbox_height * height)
+        
+        # Calculate the top-left and bottom-right corners of the bounding box
+        top_left_x = int(x_center_pixel - bbox_width_pixel / 2)
+        top_left_y = int(y_center_pixel - bbox_height_pixel / 2)
+        bottom_right_x = int(x_center_pixel + bbox_width_pixel / 2)
+        bottom_right_y = int(y_center_pixel + bbox_height_pixel / 2)
+        
+        # Draw the bounding box (using green color and thickness of 2)
+        cv2.rectangle(img, (top_left_x, top_left_y), (bottom_right_x, bottom_right_y), (0, 255, 0), 2)
+    
+        # Show the image with bounding boxes (press any key to close)
+        cv2.imshow('Bounding Boxes', img)
+        cv2.waitKey(10000)
+        cv2.destroyAllWindows()
+
+def read_bounding_boxes(txt_file):
+    bboxes = []
+    with open(txt_file, 'r') as file:
+        for line in file.readlines():
+            values = line.strip().split()
+            class_id = int(values[0])
+            x_center = float(values[1])
+            y_center = float(values[2])
+            bbox_width = float(values[3])
+            bbox_height = float(values[4])
+            bboxes.append((class_id, x_center, y_center, bbox_width, bbox_height))
+    return bboxes
+
+os.chdir("C:/Users/ishaa/Coding Projects/Applied-AI/ROS/assets/maize")
+print(os.getcwd())
+boxes = read_bounding_boxes("IMG_2884_18.txt")
+print(boxes)
+draw_bounding_boxes("IMG_2884_18.JPG", boxes)

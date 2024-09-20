@@ -1,0 +1,20 @@
+<package format="3">
+  <name>my_package</name>
+  <version>0.0.1</version>
+  <description>My ROS2 package with C++ and Python nodes</description>
+  <maintainer email="your_email@example.com">Your Name</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
+  <exec_depend>python3</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
+
+<depend>: Specifies dependencies for both C++ and Python.
+<exec_depend>: Specifies runtime dependencies like Python.

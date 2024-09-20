@@ -1,5 +1,3 @@
-# my_package/test/test_bbox_node.py
-
 import unittest
 import numpy as np
 from my_package.bbox_node import BBoxNode

@@ -1,0 +1,38 @@
+cmake_minimum_required(VERSION 3.5)
+project(my_package)
+
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(rclcpp_components REQUIRED)
+
+add_library(my_cpp_node1 SHARED src/my_cpp_node1.cpp)
+target_include_directories(my_cpp_node1 PRIVATE include)
+ament_target_dependencies(my_cpp_node1 rclcpp rclcpp_components)
+
+add_library(my_cpp_node2 SHARED src/my_cpp_node2.cpp)
+target_include_directories(my_cpp_node2 PRIVATE include)
+ament_target_dependencies(my_cpp_node2 rclcpp rclcpp_components)
+
+rclcpp_components_register_nodes(my_cpp_node1 "my_package::MyCppNode1")
+rclcpp_components_register_nodes(my_cpp_node2 "my_package::MyCppNode2")
+
+install(TARGETS
+  my_cpp_node1
+  my_cpp_node2
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)
+
+install(DIRECTORY include/ DESTINATION include/)
+install(PROGRAMS
+  scripts/my_python_node.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+ament_package()
+
+# for cross compile python w/ cpp
+add_library: Creates shared libraries for C++ nodes.
+rclcpp_components_register_nodes: Registers C++ components for composition.
+install: Installs binaries and scripts.
