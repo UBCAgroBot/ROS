@@ -17,6 +17,9 @@ previous_time_right = time.time()
 velocity = 1
 shift_constant = 1
 
+def print_camera_information(cam): 
+	print("Serial number: {0}.\n".format( cam.get_camera_information().serial_number))
+
 def initialize_image_source(source_type="static_image", image_path='C:/Users/ishaa/Coding Projects/Applied-AI/ROS/assets/maize'):
     if source_type == "static_image":
         if not os.path.exists(image_path):

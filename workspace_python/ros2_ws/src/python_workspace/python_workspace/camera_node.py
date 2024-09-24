@@ -4,24 +4,26 @@ import pyzed.sl as sl
 import pycuda.driver as cuda
 import cupy as cp
 import numpy as np
+import queue
 
 import rclpy
 from rclpy.time import Time
 from rclpy.node import Node
+from rclpy.components import NodeComponent
 from rclpy.executors import MultiThreadedExecutor
 from sensor_msgs.msg import Image
 from std_msgs.msg import Header, String
-from cv_bridge import CvBridge
-
-cuda.init()
-device = cuda.Device(0)
-cuda_driver_context = device.make_context()
+from cv2 import cvbridge # check if this is necessary
 
 class CameraNode(Node):
     def __init__(self):
         super().__init__('camera_node')
+        
+        cuda.init()
+        device = cuda.Device(0)
+        self.cuda_driver_context = device.make_context()
+        self.stream = cuda.Stream()
 
-        # change defaults here
         self.declare_parameter('source_type', 'zed')  # static_image, video, zed
         self.declare_parameter('static_image_path', '/home/usr/Desktop/ROS/assets/IMG_1822_14.JPG')
         self.declare_parameter('video_path', '/home/usr/Desktop/ROS/assets/video.mp4')
@@ -30,8 +32,8 @@ class CameraNode(Node):
         self.declare_parameter('model_dimensions', (448, 1024))
         self.declare_parameter('camera_side', 'left') # left, right
         self.declare_parameter('shift_constant', 1)
-        self.declare_parameter('roi_dimensions', [0, 0, 100, 100])        
-        # propagate fp16 option (.fp16 datatype for cupy)
+        self.declare_parameter('roi_dimensions', [0, 0, 100, 100])  
+        self.declare_paramter('precision', 'fp32')      
         
         self.source_type = self.get_parameter('source_type').get_parameter_value().string_value
         self.static_image_path = self.get_parameter('static_image_path').get_parameter_value().string_value
@@ -42,11 +44,12 @@ class CameraNode(Node):
         self.camera_side = self.get_parameter('camera_side').get_parameter_value().string_value
         self.shift_constant = self.get_parameter('shift_constant').get_parameter_value().integer_value
         self.roi_dimensions = self.get_parameter('roi_dimensions').get_parameter_value().integer_array_value
+        self.precision = self.get_parameter('precision').get_parameter_value().string_value
 
         self.pointer_publisher = self.create_publisher(String, 'preprocessing_done', 10)
-        self.image_publisher = self.create_publisher(Image, 'image_data', 10)
-        self.bridge = CvBridge()
+        # self.image_service = self.create_service(Image, 'image_data', self.image_callback)
         self.velocity = 0
+        self.image_queue = queue.Queue()
 
         if self.source_type == 'static_image':
             self.publish_static_image()
@@ -57,6 +60,25 @@ class CameraNode(Node):
         else:
             self.get_logger().error(f"Invalid source_type: {self.source_type}")
             return
+
+        # propagate fp16 option (.fp16 datatype for cupy)
+        if self.precision == 'fp32':
+            pass
+        elif self.precision == 'fp16':
+            pass
+        else:
+            self.get_logger().error(f"Invalid precision: {self.precision}")
+    
+    # save copy of image to queue
+    def image_callback(self, request, response):
+        self.get_logger().info("Received image request")
+        if not self.image_queue.empty():
+            image = self.image_queue.get()
+            response.image = image
+            return response
+        else:
+            self.get_logger().error("Image queue is empty")
+            return response
     
     def publish_static_image(self):
         if not os.path.exists(self.static_image_path):
@@ -182,9 +204,10 @@ class CameraNode(Node):
         gpu_image = gpu_image[roi_y:(roi_y+roi_h), shifted_x:(shifted_x+roi_w)] # crop the image to ROI
         gpu_image = cv2.cuda.resize(gpu_image, self.dimensions) # resize to model dimensions
         
-        input_data = cp.asarray(gpu_image.download(), dtype=cp.float32)  # Now the image is on GPU memory as CuPy array
-        input_data /= 255.0 # normalize to [0, 1]
+        input_data = cp.asarray(gpu_image)  # Now the image is on GPU memory as CuPy array
+        input_data = input_data.astype(cp.float32) / 255.0 # normalize to [0, 1]
         input_data = cp.transpose(input_data, (2, 0, 1)) # Transpose from HWC (height, width, channels) to CHW (channels, height, width)
+        input_data = cp.ravel(input_data) # flatten the array
 
         d_input_ptr = input_data.data.ptr  # Get device pointer of the CuPy array
         ipc_handle = cuda.mem_get_ipc_handle(d_input_ptr) # Create the IPC handle
@@ -196,16 +219,12 @@ class CameraNode(Node):
         ipc_handle_msg = String()
         ipc_handle_msg.data = str(ipc_handle.handle)
         self.pointer_publisher.publish(ipc_handle_msg)
+
+    def enqueue_image(self, image):
+        self.image_queue.put(image) # append as tuple (image, velocity)
     
-    def publish_image(self, image):
-        header = Header()
-        header.stamp = self.get_clock().now().to_msg()
-        # header.frame_id = str(self.index)  # encode the transformation data into header
-        image_msg = self.bridge.cv2_to_imgmsg(image, encoding="rgb8") 
-        image_msg.header = header
-        image_msg.is_bigendian = 0 
-        image_msg.step = image_msg.width * 3
-        self.publisher.publish(image_msg)
+    def dequeue_image(self):
+        self.image_queue.get()
 
 def main(args=None):
     rclpy.init(args=args)
@@ -220,5 +239,53 @@ def main(args=None):
         camera_node.destroy_node()
         rclpy.shutdown()
 
+def generate_node():
+    return NodeComponent(CameraNode, "camera_node")
+
 if __name__ == '__main__':
     main()
+
+# cupy alternative:
+# import cupy as cp
+# import cv2
+
+# # Load image to CPU
+# image = cv2.imread('image.png', cv2.IMREAD_UNCHANGED)
+
+# # Upload image to GPU with CuPy
+# gpu_image = cp.asarray(image)
+
+# # Convert RGBA to RGB
+# gpu_image = gpu_image[:, :, :3]  # Assuming last channel is alpha
+
+# # Crop the image
+# gpu_image = gpu_image[roi_y:roi_y+roi_h, roi_x:roi_x+roi_w, :]
+
+# # Resize the image (using CuPy's array resize, or via integration with other libraries)
+# gpu_image = cp.array(cv2.resize(cp.asnumpy(gpu_image), (224, 224)))
+
+# # Normalize and transpose the image
+# gpu_image = gpu_image.astype(cp.float32) / 255.0
+# gpu_image = cp.transpose(gpu_image, (2, 0, 1))
+
+# pytorch alternative:
+# import torch
+# import torchvision.transforms as T
+# import cv2
+
+# # Load image to CPU
+# image = cv2.imread('image.png', cv2.IMREAD_UNCHANGED)
+
+# # Transfer to PyTorch tensor
+# image_tensor = torch.from_numpy(image).cuda()
+
+# # Remove alpha and preprocess
+# transform = T.Compose([
+#     T.Lambda(lambda x: x[:, :, :3]),  # Remove alpha
+#     T.Lambda(lambda x: x[roi_y:roi_y+roi_h, roi_x:roi_x+roi_w, :]),  # Crop
+#     T.Resize((224, 224)),
+#     T.ToTensor(),  # Convert to tensor and normalize
+# ])
+
+# # Apply transformation
+# image_tensor = transform(image_tensor)

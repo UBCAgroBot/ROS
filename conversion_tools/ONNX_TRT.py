@@ -49,6 +49,9 @@ def convert_onnx_to_trt(model_path="/home/user/Downloads/model.onnx", output_pat
         config.set_flag(trt.BuilderFlag.FP16)
     # elif INT8:
     #     config.set_flag(trt.BuilderFlag.INT8)
+    # Enable FP16 optimization if the device supports it
+    # if builder.platform_has_fast_fp16:
+    #     builder.fp16_mode = True
     
     if strip_weights:
         config.set_flag(trt.BuilderFlag.STRIP_PLAN)

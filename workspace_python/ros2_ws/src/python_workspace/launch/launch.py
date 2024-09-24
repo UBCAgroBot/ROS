@@ -7,8 +7,6 @@ from launch.substitutions import LaunchConfiguration
 from launch.actions import DeclareLaunchArgument
 from launch.conditions import IfCondition
 
-# update parameters
-# specify side to camera_node and jetson_node for left/right subscriber/topic
 # should be two composition containers for left/right
 def generate_launch_description():
     return LaunchDescription([
@@ -124,5 +122,80 @@ def generate_launch_description():
                 {'roi_list': LaunchConfiguration('roi_list')},
                 {'publish_rate': LaunchConfiguration('publish_rate')},
             ]
+        ),
+    ])
+
+import launch
+from launch_ros.actions import ComposableNodeContainer
+from launch_ros.descriptions import ComposableNode
+
+# from launch import LaunchDescription
+# from launch_ros.descriptions import ComposableNodeContainer, ComposableNode
+
+def generate_launch_description():
+    container = ComposableNodeContainer(
+        name='my_container',
+        namespace='',
+        package='rclcpp_components',
+        executable='component_container_mt',  # Multi-threaded container
+        composable_node_descriptions=[
+            ComposableNode(
+                package='my_package',
+                plugin='my_composable_node.MyComposableNode',
+                name='my_composable_node',
+                parameters=[{'use_display_node': True},]
+            ),
+        ],
+        output='screen',
+        argumens=['--ros-args', '--log-level', 'info']
+    )
+
+    return launch.LaunchDescription([container])
+
+import os
+from launch import LaunchDescription
+from launch_ros.actions import PushRosNamespace
+from launch_ros.actions import Node
+from launch.substitutions import LaunchConfiguration
+
+def generate_launch_description():
+    return LaunchDescription([
+        PushRosNamespace('camera_jetson_namespace'),  # Optional: Organize nodes under a namespace
+        
+        Node(
+            package='your_camera_package',  # Replace with the actual package name for CameraNode
+            namespace='camera',
+            executable='camera_node',
+            name='camera_node',
+            output='screen',
+            parameters=[
+                {
+                    'source_type': 'zed',  # Example parameter, change as necessary
+                    'static_image_path': '/home/usr/Desktop/ROS/assets/IMG_1822_14.JPG',
+                    'video_path': '/home/usr/Desktop/ROS/assets/video.mp4',
+                    'loop': 0,  # Example value, adjust accordingly
+                    'frame_rate': 30,
+                    'model_dimensions': (448, 1024),
+                    'camera_side': 'left',
+                    'shift_constant': 1,
+                    'roi_dimensions': [0, 0, 100, 100],
+                    'precision': 'fp32',  # Example precision
+                }
+            ],
+        ),
+        
+        Node(
+            package='your_jetson_package',  # Replace with the actual package name for JetsonNode
+            namespace='jetson',
+            executable='jetson_node',
+            name='jetson_node',
+            output='screen',
+            parameters=[
+                {
+                    'engine_path': '/home/user/Downloads/model.engine',  # Replace with the actual engine path
+                    'strip_weights': False,
+                    'precision': 'fp32',  # Example precision
+                }
+            ],
         ),
     ])
