@@ -8,7 +8,6 @@ import torchvision
 # from tracker import *
 # depth point cloud here...
 # add object counter
-# log end to end  latency by checking time.time_now() and unpacking time from header of initial image after the extermination output is decided
 
 import rclpy
 from rclpy.time import Time
@@ -148,7 +147,7 @@ class ExterminationNode(Node):
             if x1 >= roi_x1 and x2 <= roi_x2 and y1 >= roi_y1 and y2 <= roi_y2:
                 self.on = 1
                 if self.display:
-                    
+                    pass
             
         if self.display:
             self.display(disp_image, adjusted_bboxes)

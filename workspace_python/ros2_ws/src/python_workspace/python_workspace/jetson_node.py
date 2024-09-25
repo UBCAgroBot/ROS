@@ -76,18 +76,6 @@ class JetsonNode(Node):
         
         self.cuda_driver_context.push()
         self.get_logger().info(f"Received IPC handle: {ipc_handle_str}")
-        # # Convert the string back to bytes for the IPC handle
-        # ipc_handle_str = msg.data
-        # ipc_handle_bytes = bytes(int(ipc_handle_str[i:i+2], 16) for i in range(0, len(ipc_handle_str), 2))
-
-        # # Recreate the IPC handle using PyCUDA
-        # ipc_handle = cuda.IPCHandle(ipc_handle_bytes)
-
-        # # Map the IPC memory into the current process
-        # d_input = cuda.IPCMemoryHandle(ipc_handle)
-
-        # # Map the memory to the current context
-        # self.d_input = d_input.open(cuda.Context.get_current())
         
         # Re-create the CuPy array from IPC handle
         ipc_handle_str = ipc_handle_msg.data
