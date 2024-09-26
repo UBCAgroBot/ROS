@@ -251,3 +251,5 @@ print(f"Stripped TensorRT Inference Time: {stripped_time:.6f} seconds")
 
 output_torch_trt, torch_trt_time = comparison.infer_with_torch_trt()
 print(f"Torch2TRT Inference Time: {torch_trt_time:.6f} seconds")
+
+## compare bounding box output to the expected from the file...

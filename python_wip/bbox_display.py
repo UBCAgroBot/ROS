@@ -11,8 +11,6 @@ def draw_bounding_boxes(image_path, bboxes):
     
     # Get the dimensions of the image
     height, width, _ = img.shape
-    print(height)
-    print(width)
     
     # Draw each bounding box on the image
     for bbox in bboxes:
@@ -33,10 +31,10 @@ def draw_bounding_boxes(image_path, bboxes):
         # Draw the bounding box (using green color and thickness of 2)
         cv2.rectangle(img, (top_left_x, top_left_y), (bottom_right_x, bottom_right_y), (0, 255, 0), 2)
     
-        # Show the image with bounding boxes (press any key to close)
-        cv2.imshow('Bounding Boxes', img)
-        cv2.waitKey(10000)
-        cv2.destroyAllWindows()
+    # Show the image with bounding boxes (press any key to close)
+    cv2.imshow('Bounding Boxes', img)
+    cv2.waitKey(10000)
+    cv2.destroyAllWindows()
 
 def read_bounding_boxes(txt_file):
     bboxes = []
@@ -52,7 +50,5 @@ def read_bounding_boxes(txt_file):
     return bboxes
 
 os.chdir("C:/Users/ishaa/Coding Projects/Applied-AI/ROS/assets/maize")
-print(os.getcwd())
 boxes = read_bounding_boxes("IMG_2884_18.txt")
-print(boxes)
 draw_bounding_boxes("IMG_2884_18.JPG", boxes)
