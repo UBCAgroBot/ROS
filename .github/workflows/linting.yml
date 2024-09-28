@@ -3,10 +3,8 @@ name: Test Setup ROS
 on:
   push:
     branches:
-      - lint  # Listen for pushes to this branch
-    paths:
-      - 'workspace_cpp/ros2_ws/src/node_test/**'  # Only trigger on changes in this directory
-
+      - lint 
+      
 jobs:
   test_setup_ros:
     runs-on: ubuntu-latest
@@ -42,24 +40,15 @@ jobs:
           ref: humble
           path: 'ament_lint'
 
-      - name: Try default linter
-        uses: ./
-        with:
-          package-name: ament_copyright ament_lint
-          workspace-directory: ament_lint
+      # Run linters inside the specified directory
+      - name: Run linters
+        working-directory: workspace_cpp/ros2_ws/src/node_test  # Change to the target directory
+        run: |
+          # Run default linter
+          ament_lint --package-name ament_copyright ament_lint --workspace-directory ament_lint
 
-      - name: Try a linter with additional arguments
-        uses: ./
-        with:
-          linter: lint_cmake
-          arguments: '--filter=-linelength,+syntax'
-          package-name: ament_cmake_cpplint
-          workspace-directory: ament_lint
+          # Run additional linter with arguments
+          ament_lint --linter lint_cmake --arguments '--filter=-linelength,+syntax' --package-name ament_cmake_cpplint --workspace-directory ament_lint
 
-      - name: Try a linter with underscores in the name
-        uses: ./
-        with:
-          linter: lint_cmake
-          arguments: '--filter=-linelength'
-          package-name: ament_cmake_cpplint
-          workspace-directory: ament_lint
+          # Run linter with underscores in the name
+          ament_lint --linter lint_cmake --arguments '--filter=-linelength' --package-name ament_cmake_cpplint --workspace-directory ament_lint
