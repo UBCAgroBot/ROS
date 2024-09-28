@@ -4,19 +4,14 @@ on:
   push:
     branches:
       - lint 
-      
+
 jobs:
   test_setup_ros:
     runs-on: ubuntu-latest
     container:
-      image: ubuntu:noble
+      image: ubuntu:jammy
 
     steps:
-      - name: Install Git
-        run: |
-          apt-get update
-          apt-get install -y git
-      
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -37,15 +32,32 @@ jobs:
           ref: humble
           path: 'ament_lint'
 
-      # Run linters inside the specified directory
-      - name: Run linters
-        working-directory: workspace_cpp/ros2_ws/src/node_test  # Change to the target directory
+      - name: Install ament_lint dependencies
         run: |
-          # Run default linter
+          # Source ROS and setup the environment
+          source /opt/ros/humble/setup.bash
+          cd ament_lint
+          colcon build
+          source install/setup.bash
+
+      - name: Try default linter
+        working-directory: workspace_cpp/ros2_ws/src/node_test
+        run: |
+          source /opt/ros/humble/setup.bash
+          source ament_lint/install/setup.bash
           ament_lint --package-name ament_copyright ament_lint --workspace-directory ament_lint
 
-          # Run additional linter with arguments
+      - name: Try a linter with additional arguments
+        working-directory: workspace_cpp/ros2_ws/src/node_test
+        run: |
+          source /opt/ros/humble/setup.bash
+          source ament_lint/install/setup.bash
           ament_lint --linter lint_cmake --arguments '--filter=-linelength,+syntax' --package-name ament_cmake_cpplint --workspace-directory ament_lint
 
-          # Run linter with underscores in the name
+      - name: Try a linter with underscores in the name
+        working-directory: workspace_cpp/ros2_ws/src/node_test
+        run: |
+          source /opt/ros/humble/setup.bash
+          source ament_lint/install/setup.bash
           ament_lint --linter lint_cmake --arguments '--filter=-linelength' --package-name ament_cmake_cpplint --workspace-directory ament_lint
+
