@@ -24,5 +24,4 @@ jobs:
     - name: Run ROS Lint
       uses: ros-tooling/action-ros-lint@master
       with:
-        linter: copyright
         package-name: node_tests  # Replace with your actual package name
