@@ -1,6 +1,5 @@
 # ROS
 
-Asset folder holds all image sources
 
 -> video setting should be named video.mp4 
 images can be named w/e but must end with .jpg or .png
