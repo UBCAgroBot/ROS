@@ -19,11 +19,8 @@ jobs:
 
       - name: Sparse checkout specific folder
         run: |
-          # Initialize sparse checkout
           git config core.sparseCheckout true
-          # Specify the folder to checkout
-          echo "workspace_cpp/ros2/src/node-test/" >> .git/info/sparse-checkout
-          # Pull the specific folder from the main branch
+          echo "workspace_cpp/ros2_ws/src/node_test/" >> .git/info/sparse-checkout
           git checkout main
           
       - name: Setup Node.js
