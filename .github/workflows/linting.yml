@@ -2,10 +2,10 @@ name: Test Setup ROS
 
 on:
   push:
-    paths:
-        - 'workspace_cpp/ros2_ws/src/node_test/**'
     branches:
-      - lint
+      - lint  # Listen for pushes to this branch
+    paths:
+      - 'workspace_cpp/ros2_ws/src/node_test/**'  # Only trigger on changes in this directory
 
 jobs:
   test_setup_ros:
@@ -18,10 +18,12 @@ jobs:
         run: |
           apt-get update
           apt-get install -y git
+      
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           path: '.'
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
