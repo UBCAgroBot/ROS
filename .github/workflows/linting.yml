@@ -2,6 +2,8 @@ name: Test Setup ROS
 
 on:
   push:
+    paths:
+        - 'workspace_cpp/ros2_ws/src/node_test/**'
     branches:
       - lint
 
@@ -20,13 +22,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: '.'
-
-      - name: Sparse checkout specific folder
-        run: |
-          git config core.sparseCheckout true
-          echo "workspace_cpp/ros2_ws/src/node_test/" >> .git/info/sparse-checkout
-          git checkout main
-          
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
