@@ -3,7 +3,7 @@ name: Test Setup ROS
 on:
   push:
     branches:
-      - main
+      - lint
 
 jobs:
   test_setup_ros:
