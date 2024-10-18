@@ -1,10 +1,7 @@
-# Use an official Python runtime as a parent image
 FROM python:3.10-slim-buster
 
-# Set environment variables to prevent prompts during package installations
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     git \
@@ -22,10 +19,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Upgrade pip
 RUN python3 -m pip install --upgrade pip
 
-# Install CPU-only Python packages
 RUN pip3 install --upgrade --no-cache-dir --verbose \
     numpy \
     wandb \
@@ -40,8 +35,6 @@ RUN pip3 install --upgrade --no-cache-dir --verbose \
     tensorflow-cpu-aws \
     torch --extra-index-url https://download.pytorch.org/whl/cpu
 
-# Expose port for Jupyter Notebook
 EXPOSE 8888
 
-# Set the default command to run jupyter notebook
 CMD ["jupyter", "notebook", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root"]

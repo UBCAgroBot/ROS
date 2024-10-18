@@ -1,10 +1,7 @@
-# Use an official NVIDIA runtime image with CUDA
 FROM nvidia/cuda:12.2.2-cudnn8-runtime-ubuntu20.04
 
-# Set environment variables to prevent prompts during package installations
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     git \
@@ -27,11 +24,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Upgrade pip
 RUN python3 -m pip install --upgrade pip
 
-# Install CUDA-enabled Python packages
-RUN pip install --no-cache-dir \
+RUN pip install --upgrade --no-cache-dir --verbose \
     numpy \
     scipy \
     scikit-learn \
@@ -53,8 +48,6 @@ RUN pip install --no-cache-dir \
     torch-tensorrt \
     tensorrt
 
-# Expose port for Jupyter Notebook
 EXPOSE 8888
 
-# Set the default command to run shell
 CMD ["jupyter", "notebook", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root"]
