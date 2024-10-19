@@ -51,7 +51,7 @@ class ModelInference:
 
             return out_img,named_classes, confidences, boxes
         
-        return  None, [], [], []
+        return image_array, [], [], []
 
     def postprocess(self, result:Results) -> np.ndarray:
         """
