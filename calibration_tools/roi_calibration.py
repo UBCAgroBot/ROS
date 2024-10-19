@@ -20,7 +20,7 @@ shift_constant = 1
 def print_camera_information(cam): 
 	print("Serial number: {0}.\n".format( cam.get_camera_information().serial_number))
 
-def initialize_image_source(source_type="static_image", image_path='C:/Users/ishaa/Coding Projects/Applied-AI/ROS/assets/maize'):
+def initialize_image_source(source_type="static_image", image_path='C:/Users/ishaa/Coding Projects/ROS/assets/maize'):
     if source_type == "static_image":
         if not os.path.exists(image_path):
             raise ValueError(f"Images folder not found at {image_path}")
@@ -120,7 +120,7 @@ def retrieve_zed_image(cam, orientation="left"):
     
     return image, velocity[0]
 
-def roi_calibrator(source_type="static_image", images_path='C:/Users/ishaa/Coding Projects/Applied-AI/ROS/assets/maize'):
+def roi_calibrator(source_type="static_image", images_path='C:/Users/Ishaan/Coding Projects/Applied-AI/ROS/assets/maize'):
     global roi_x, roi_y, roi_w, roi_h, shift_constant, velocity
     image_source = initialize_image_source(source_type, images_path)
     if source_type == "zed_double":
@@ -233,5 +233,5 @@ if __name__ == "__main__":
     parser.add_argument('--source_type', type=str, required=False, help='Type of image source (static_image, zed_single, zed_double)')
     parser.add_argument('--images_path', type=str, required=False, help='Path to the folder of calibration images')
     args = parser.parse_args()
-    # roi_calibrator(args.source_type, args.images_path)
-    roi_calibrator()
+    roi_calibrator(args.source_type, args.images_path)
+    # roi_calibrator()

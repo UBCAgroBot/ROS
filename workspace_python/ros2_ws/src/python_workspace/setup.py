@@ -1,6 +1,6 @@
 import os
 from glob import glob
-from setuptools import setup, find_packages
+from setuptools import setup
 
 package_name = 'python_workspace'
 subfolder = f'{package_name}/scripts'

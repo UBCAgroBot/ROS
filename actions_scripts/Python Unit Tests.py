@@ -2,6 +2,9 @@ import unittest
 import numpy as np
 from my_package.bbox_node import BBoxNode
 
+# get outputs of ultralytics and assert function diff between ultralytics and module vlaue is less than 0.5%
+# unit tests for also length of list (object count)
+
 def calculate_iou(boxA, boxB):
     """
     Calculate the Intersection over Union (IoU) between two bounding boxes.
