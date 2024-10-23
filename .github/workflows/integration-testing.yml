@@ -1,5 +1,20 @@
 name: Model Conversion Pipeline
 
+## unit/integration testing
+
+## particularly for building/running the tensorRT engine on the jetson with setup
+
+# same thing for running onnx runtime model
+
+
+## save images and upload as an artifact from pipeline
+
+## include detection confidence scores
+
+## should trigger second pipeline after for performance testing
+
+# save 
+
 on:
   workflow_dispatch:
     inputs:

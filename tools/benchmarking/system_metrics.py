@@ -7,6 +7,8 @@ from collections import deque
 
 # arguments: --duration 1 --file jtop.csv
 
+# make callable class functions to start and end recording, report results, produce plot
+
 def calculate_rolling_average(data):
     return {key: sum(values)/len(values) for key, values in data.items()}
 

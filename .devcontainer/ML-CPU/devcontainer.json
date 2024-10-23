@@ -1,7 +1,7 @@
 {
-    "name": "ROS2 Dev Container",
+    "name": "ML Dev Container (CPU)",
     "remoteUser": "vscode",
-    "image": "agrobotappliedai/ros-containers:latest",
+    "image": "agrobotappliedai/mlcontainers-cpu:latest",
     "customizations":{
         "settings": {
             "terminal.integrated.shell.linux": "bash"
@@ -14,5 +14,5 @@
         "--net=host",
         "-it"
     ],
-    "postCreateCommand": "bash -c 'echo source /opt/ros/humble/setup.bash >> ~/.bashrc && source /opt/ros/humble/setup.bash'"
+    "postStartCommand": "nohup bash -c 'jupyter notebook --allow-root --no-browser --ip=0.0.0.0 --port=8888 --NotebookApp.token='' --NotebookApp.password='' --ServerApp.root_dir=/home/vscode/workspace > /home/vscode/workspace/jupyter.log 2>&1 &'"
 }

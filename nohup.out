@@ -1,0 +1,69 @@
+[W 2024-10-23 19:12:01.303 ServerApp] A `_jupyter_server_extension_points` function was not found in jupyterlab_tensorboard_pro. Instead, a `_jupyter_server_extension_paths` function was found and will be used for now. This function name will be deprecated in future releases of Jupyter Server.
+[I 2024-10-23 19:12:01.305 ServerApp] jupyter_lsp | extension was successfully linked.
+[I 2024-10-23 19:12:01.311 ServerApp] jupyter_server_terminals | extension was successfully linked.
+[W 2024-10-23 19:12:01.313 LabApp] 'token' has moved from NotebookApp to ServerApp. This config will be passed to ServerApp. Be sure to update your config before our next release.
+[W 2024-10-23 19:12:01.313 LabApp] 'password' has moved from NotebookApp to ServerApp. This config will be passed to ServerApp. Be sure to update your config before our next release.
+[W 2024-10-23 19:12:01.319 ServerApp] ServerApp.token config is deprecated in 2.0. Use IdentityProvider.token.
+[I 2024-10-23 19:12:01.319 ServerApp] jupyterlab | extension was successfully linked.
+[I 2024-10-23 19:12:01.320 ServerApp] jupyterlab_code_formatter | extension was successfully linked.
+[I 2024-10-23 19:12:01.320 ServerApp] jupyterlab_jupytext | extension was successfully linked.
+[I 2024-10-23 19:12:01.321 ServerApp] jupyterlab_tensorboard_pro | extension was successfully linked.
+[I 2024-10-23 19:12:01.327 ServerApp] notebook | extension was successfully linked.
+[I 2024-10-23 19:12:01.330 ServerApp] Writing Jupyter server cookie secret to /home/vscode/.local/share/jupyter/runtime/jupyter_cookie_secret
+[I 2024-10-23 19:12:01.558 ServerApp] notebook_shim | extension was successfully linked.
+[W 2024-10-23 19:12:01.588 ServerApp] All authentication is disabled.  Anyone who can connect to this server will be able to run code.
+[I 2024-10-23 19:12:01.589 ServerApp] notebook_shim | extension was successfully loaded.
+[I 2024-10-23 19:12:01.592 ServerApp] jupyter_lsp | extension was successfully loaded.
+[I 2024-10-23 19:12:01.593 ServerApp] jupyter_server_terminals | extension was successfully loaded.
+[I 2024-10-23 19:12:01.595 LabApp] JupyterLab extension loaded from /usr/local/lib/python3.10/dist-packages/jupyterlab
+[I 2024-10-23 19:12:01.595 LabApp] JupyterLab application directory is /usr/local/share/jupyter/lab
+[I 2024-10-23 19:12:01.596 LabApp] Extension Manager is 'pypi'.
+[I 2024-10-23 19:12:01.633 ServerApp] jupyterlab | extension was successfully loaded.
+[I 2024-10-23 19:12:01.633 ServerApp] Registered jupyterlab_code_formatter server extension
+[I 2024-10-23 19:12:01.634 ServerApp] jupyterlab_code_formatter | extension was successfully loaded.
+[I 2024-10-23 19:12:01.634 ServerApp] [Jupytext Server Extension] NotebookApp.contents_manager_class is (a subclass of) jupytext.TextFileContentsManager already - OK
+[I 2024-10-23 19:12:01.634 ServerApp] jupyterlab_jupytext | extension was successfully loaded.
+[I 2024-10-23 19:12:02.222 ServerApp] jupyterlab_tensorboard_pro extension loaded.
+[I 2024-10-23 19:12:02.222 ServerApp] jupyterlab_tensorboard_pro | extension was successfully loaded.
+[I 2024-10-23 19:12:02.226 ServerApp] notebook | extension was successfully loaded.
+[I 2024-10-23 19:12:02.227 ServerApp] The port 8888 is already in use, trying another port.
+[I 2024-10-23 19:12:02.227 ServerApp] Serving notebooks from local directory: /home/vscode/workspace
+[I 2024-10-23 19:12:02.228 ServerApp] Jupyter Server 2.14.2 is running at:
+[I 2024-10-23 19:12:02.229 ServerApp] http://hostname:8888/tree
+[I 2024-10-23 19:12:02.229 ServerApp]     http://127.0.0.1:8889/tree
+[I 2024-10-23 19:12:02.229 ServerApp] Use Control-C to stop this server and shut down all kernels (twice to skip confirmation).
+[I 2024-10-23 19:12:02.284 ServerApp] Skipped non-installed server(s): bash-language-server, dockerfile-language-server-nodejs, javascript-typescript-langserver, jedi-language-server, julia-language-server, pyright, python-language-server, python-lsp-server, r-languageserver, sql-language-server, texlab, typescript-language-server, unified-language-server, vscode-css-languageserver-bin, vscode-html-languageserver-bin, vscode-json-languageserver-bin, yaml-language-server
+[W 2024-10-23 19:16:32.580 ServerApp] A `_jupyter_server_extension_points` function was not found in jupyterlab_tensorboard_pro. Instead, a `_jupyter_server_extension_paths` function was found and will be used for now. This function name will be deprecated in future releases of Jupyter Server.
+[I 2024-10-23 19:16:32.582 ServerApp] jupyter_lsp | extension was successfully linked.
+[I 2024-10-23 19:16:32.586 ServerApp] jupyter_server_terminals | extension was successfully linked.
+[W 2024-10-23 19:16:32.587 LabApp] 'token' has moved from NotebookApp to ServerApp. This config will be passed to ServerApp. Be sure to update your config before our next release.
+[W 2024-10-23 19:16:32.587 LabApp] 'password' has moved from NotebookApp to ServerApp. This config will be passed to ServerApp. Be sure to update your config before our next release.
+[W 2024-10-23 19:16:32.591 ServerApp] ServerApp.token config is deprecated in 2.0. Use IdentityProvider.token.
+[I 2024-10-23 19:16:32.591 ServerApp] jupyterlab | extension was successfully linked.
+[I 2024-10-23 19:16:32.592 ServerApp] jupyterlab_code_formatter | extension was successfully linked.
+[I 2024-10-23 19:16:32.592 ServerApp] jupyterlab_jupytext | extension was successfully linked.
+[I 2024-10-23 19:16:32.592 ServerApp] jupyterlab_tensorboard_pro | extension was successfully linked.
+[I 2024-10-23 19:16:32.597 ServerApp] notebook | extension was successfully linked.
+[I 2024-10-23 19:16:32.791 ServerApp] notebook_shim | extension was successfully linked.
+[W 2024-10-23 19:16:32.809 ServerApp] All authentication is disabled.  Anyone who can connect to this server will be able to run code.
+[I 2024-10-23 19:16:32.810 ServerApp] notebook_shim | extension was successfully loaded.
+[I 2024-10-23 19:16:32.813 ServerApp] jupyter_lsp | extension was successfully loaded.
+[I 2024-10-23 19:16:32.814 ServerApp] jupyter_server_terminals | extension was successfully loaded.
+[I 2024-10-23 19:16:32.816 LabApp] JupyterLab extension loaded from /usr/local/lib/python3.10/dist-packages/jupyterlab
+[I 2024-10-23 19:16:32.816 LabApp] JupyterLab application directory is /usr/local/share/jupyter/lab
+[I 2024-10-23 19:16:32.817 LabApp] Extension Manager is 'pypi'.
+[I 2024-10-23 19:16:32.863 ServerApp] jupyterlab | extension was successfully loaded.
+[I 2024-10-23 19:16:32.864 ServerApp] Registered jupyterlab_code_formatter server extension
+[I 2024-10-23 19:16:32.864 ServerApp] jupyterlab_code_formatter | extension was successfully loaded.
+[I 2024-10-23 19:16:32.864 ServerApp] [Jupytext Server Extension] NotebookApp.contents_manager_class is (a subclass of) jupytext.TextFileContentsManager already - OK
+[I 2024-10-23 19:16:32.865 ServerApp] jupyterlab_jupytext | extension was successfully loaded.
+[I 2024-10-23 19:16:33.489 ServerApp] jupyterlab_tensorboard_pro extension loaded.
+[I 2024-10-23 19:16:33.490 ServerApp] jupyterlab_tensorboard_pro | extension was successfully loaded.
+[I 2024-10-23 19:16:33.495 ServerApp] notebook | extension was successfully loaded.
+[I 2024-10-23 19:16:33.496 ServerApp] The port 8888 is already in use, trying another port.
+[I 2024-10-23 19:16:33.497 ServerApp] Serving notebooks from local directory: /home/vscode/workspace
+[I 2024-10-23 19:16:33.497 ServerApp] Jupyter Server 2.14.2 is running at:
+[I 2024-10-23 19:16:33.498 ServerApp] http://hostname:8888/tree
+[I 2024-10-23 19:16:33.498 ServerApp]     http://127.0.0.1:8889/tree
+[I 2024-10-23 19:16:33.498 ServerApp] Use Control-C to stop this server and shut down all kernels (twice to skip confirmation).
+[I 2024-10-23 19:16:33.543 ServerApp] Skipped non-installed server(s): bash-language-server, dockerfile-language-server-nodejs, javascript-typescript-langserver, jedi-language-server, julia-language-server, pyright, python-language-server, python-lsp-server, r-languageserver, sql-language-server, texlab, typescript-language-server, unified-language-server, vscode-css-languageserver-bin, vscode-html-languageserver-bin, vscode-json-languageserver-bin, yaml-language-server

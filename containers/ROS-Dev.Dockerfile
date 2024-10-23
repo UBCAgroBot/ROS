@@ -1,9 +1,6 @@
 FROM ubuntu:22.04
 
-ENV DEBIAN_FRONTEND=noninteractive \
-    LANGUAGE=en_US:en \
-    LANG=en_US.UTF-8 \
-    LC_ALL=en_US.UTF-8
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y \
     sudo \
@@ -44,9 +41,12 @@ RUN groupadd --gid $USER_GID $USERNAME \
 # Set the default user to vscode
 USER $USERNAME
 
+RUN python3 -m pip install --upgrade pip
+
 # Create workspace so that user own this directory
 RUN mkdir -p /home/$USERNAME/workspace
 WORKDIR /home/$USERNAME/workspace
 
-ENTRYPOINT ["/bin/bash"]
+ENV LANG=en_US.UTF-8
 
+ENTRYPOINT ["/bin/bash"]
