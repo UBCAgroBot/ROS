@@ -4,7 +4,7 @@
 | Node Type         | Subscribes To | Publishes To                      | Example command |
 |-------------------|----------------|-----------------------------------|------|
 | Picture Node      | `/picture/command`                | `/input_image`        | `ros2 run python_workspace picture_node --ros-args -p static_image_path:='./../assets/maize' -p loop:=-1 -p frame_rate:=1`|
-| Inference Node    | `/input_image`            | -`/bounding_box_coordinates` <br> - `/output_img`             | `ros2 run python_workspace inference_node --ros-args -p weights_path:='./ros2_ws/src/python_workspace/python_workspace/scripts/yolo11n.pt'`|
+| Inference Node    | `/input_image`            | -`/bounding_box_coordinates` <br> - `/output_img`             | `ros2 run python_workspace inference_node --ros-args -p weights_path:='../models/maize/Maize.pt'`|
 
 
 ### List of Topics and Data Types
@@ -27,6 +27,7 @@ ros2 run python_workspace jetson_node
 #### Running the extermination node
 ros2 run python_workspace extermination_node
 #### Running the picture node:
+File paths are relative to the working directory
 
 `ros2 run python_workspace picture_node --ros-args -p static_image_path:='./../assets/maize' -p loop:=-1 -p frame_rate:=1`
 
@@ -34,6 +35,40 @@ ros2 run python_workspace extermination_node
 
 The path for weights (.pt) is relative to the ROS/workspace_python/ros2_ws directory. 
 
+
+[text](../models/maize/Maize.pt)
 ```bash
-ros2 run python_workspace inference_node --ros-args -p weights_path:='./ros2_ws/src/python_workspace/python_workspace/scripts/yolo11n.pt'
+ros2 run python_workspace inference_node --ros-args -p weights_path:='../models/maize/Maize.pt'
 ```
+
+
+### using RQT to view 
+#### Installing RQT on ROS 2 Humble
+
+To install RQT and its plugins on ROS 2 Humble, use the following command:
+
+```bash
+sudo apt update
+sudo apt install ~nros-humble-rqt*
+```
+
+This command will install RQT along with all available plugins for ROS 2 Humble.
+
+#### Running RQT
+
+To start RQT, simply run:
+
+```bash
+rqt
+```
+
+You can now use RQT to visualize and interact with various ROS topics and nodes.
+
+To view the image topic : 
+
+1. go to plugins/visualization/image view. a new box will open up
+2. click refresh topic 
+3. select the name of the image topic you want to see
+
+
+source install/setup.bash

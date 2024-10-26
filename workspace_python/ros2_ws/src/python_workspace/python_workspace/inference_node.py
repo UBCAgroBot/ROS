@@ -7,6 +7,7 @@ from sensor_msgs.msg import Image
 from std_msgs.msg import Int32MultiArray, Float32MultiArray
 
 from .scripts.utils import ModelInference
+from custom_interfaces.msg import ImageInput, InferenceOutput                            # CHANGE
 
 class InferenceNode(Node):
     def __init__(self):
@@ -27,30 +28,40 @@ class InferenceNode(Node):
         
         self.bridge = CvBridge()
 
-        self.subscription = self.create_subscription(Image, 'input_image', self.image_callback, 10)
+        self.subscription = self.create_subscription(ImageInput, 'input_image', self.image_callback, 10)
         
         # create a publisher for the output image/boxes/extermination data
-        self.box_publisher = self.create_publisher(Float32MultiArray,'bounding_box_coordinates', 10)
+        self.box_publisher = self.create_publisher(InferenceOutput,'inference_out', 10)
 
         self.output_image_publisher = self.create_publisher(Image, 'output_img', 10)
 
 
     def image_callback(self, msg):
         # print("============================================")
-        opencv_img = self.bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
+        velocity = msg.velocity
+        opencv_img = self.bridge.imgmsg_to_cv2(msg.image, desired_encoding='passthrough')
         output_img, named_classes, confidences, boxes = self.model.inference(opencv_img)
 
-        output_msg = Float32MultiArray()
-        output_msg.data = []
+        # publish bounding box etc as inference output
+        output_msg = InferenceOutput()
+        output_msg.velocity = velocity
+        output_msg.preprocessed_img = msg.image
+        output_msg.num_box = len(boxes)
+
+        bounding_boxes = Float32MultiArray()
+        bounding_boxes.data = []
         if len(boxes) != 0:
-            output_msg.data = boxes
+            bounding_boxes.data = boxes
+            output_msg.bounding_boxes = bounding_boxes
         self.box_publisher.publish(output_msg)
 
 
         # convert the output image to a ROS2 image message
-        output_msg = self.bridge.cv2_to_imgmsg(output_img, encoding='rgb8')
+        # todo: this will be moved to the extermination node
+        output_image_msg = self.bridge.cv2_to_imgmsg(output_img, encoding='rgb8')
 
-        self.output_image_publisher.publish(output_msg)
+        self.output_image_publisher.publish(output_image_msg)
+
 
 
 

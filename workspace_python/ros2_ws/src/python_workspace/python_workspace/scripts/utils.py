@@ -46,14 +46,14 @@ class ModelInference:
         results =self.yolo.predict(image_array,imgsz=size) #we are only predicting one image
 
 
-        if results[0] is not None:
-            out_img, named_classes, confidences, boxes = self.postprocess(results[0])
+        if results[0] is not None: # todo: change this so the message only sends bb
+            out_img, named_classes, confidences, boxes = self.get_attributes(results[0])
 
             return out_img,named_classes, confidences, boxes
         
         return image_array, [], [], []
 
-    def postprocess(self, result:Results) -> np.ndarray:
+    def get_attributes(self, result:Results) -> np.ndarray:
         """
         postprocess the Result that we got from prediction
         returns the image with bounding boxes
@@ -71,6 +71,13 @@ class ModelInference:
 
         
         return out_img,named_classes, confidences, boxes
+    
+    def postprocess(self, image: np.ndarray):
+        """
+        Takes in a numpy array that has been preprocessed 
+        No preprocessing is nededed for YOLO
+        """
+        return image
     
     def print_info(self):
         print(self.yolo.info())

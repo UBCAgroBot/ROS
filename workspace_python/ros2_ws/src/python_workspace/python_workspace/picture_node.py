@@ -1,6 +1,6 @@
 import time, os
 import cv2
-
+import random
 import rclpy
 from rclpy.time import Time
 from rclpy.node import Node
@@ -9,6 +9,7 @@ from sensor_msgs.msg import Image
 from std_msgs.msg import Header, String
 from cv_bridge import CvBridge
 
+from custom_interfaces.msg import ImageInput                            # CHANGE
 
 # node to publish static image data to the /image topic. 
 # used for testing the inference pipelines.
@@ -35,7 +36,7 @@ class PictureNode(Node):
         self.loop_count = 0
         self.image_counter = 0
 
-        self.input_image_publisher = self.create_publisher(Image, 'input_image', 10)
+        self.input_image_publisher = self.create_publisher(ImageInput, 'input_image', 10)
         timer_period = 1/self.frame_rate  # publish every 0.5 seconds
         self.timer = self.create_timer(timer_period, self.publish_static_image)
 
@@ -65,6 +66,7 @@ class PictureNode(Node):
             return
         
         images = []
+        counter = 0
         for filename in image_paths:
 
             image = cv2.imread(filename, cv2.IMREAD_COLOR)
@@ -72,7 +74,15 @@ class PictureNode(Node):
             if image is None:
                 self.get_logger().error(f"Failed to read image: {filename}")
                 raise FileNotFoundError(f"Failed to read image: {filename}")
-            images.append(ros_image)
+            
+            image_msg = ImageInput()
+            # image_msg.header.frame_id = f'camera_frame{counter}'
+            image_msg.image = ros_image
+            image_msg.velocity = random.uniform(0, 2)
+
+            counter +=1
+
+            images.append(image_msg)
 
         return images
 
