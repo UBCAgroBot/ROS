@@ -13,7 +13,7 @@ sat_dark = 255
 val_dark = 255
 default_area = 100
 
-def color_calibrator(image_path='C:/Users/ishaa/Coding Projects/Applied-AI/ROS/assets/maize'):
+def color_calibrator(image_path='C:/Users/ishaa/Coding Projects/ROS/assets/maize'):
     if not os.path.exists(image_path):
         raise ValueError(f"Images folder not found at {image_path}")
     if len(os.listdir(image_path)) == 0:

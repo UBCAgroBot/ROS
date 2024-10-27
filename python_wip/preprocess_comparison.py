@@ -95,3 +95,7 @@ opencv_cuda_time = time.time() - start_time
 print(f"CuPy Preprocessing Time: {cupy_time:.4f} seconds")
 print(f"PyTorch Preprocessing Time: {pytorch_time:.4f} seconds")
 print(f"OpenCV with CUDA Preprocessing Time: {opencv_cuda_time:.4f} seconds")
+
+# CuPy Method: Uses CuPy for GPU-based operations. The image is uploaded to the GPU using CuPy, preprocessed (alpha channel removal, cropping, resizing, normalization), and the operation is timed.
+# PyTorch Method: Uses PyTorch for GPU-based preprocessing, applying operations like cropping, resizing, and normalization using PyTorch’s transformation pipeline.
+# OpenCV with CUDA Method: Uses OpenCV's CUDA functionality. The image is uploaded to the GPU with cv2.cuda_GpuMat and operations like cropping, resizing, and normalizing are performed.

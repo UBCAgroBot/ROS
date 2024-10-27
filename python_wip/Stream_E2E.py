@@ -159,3 +159,65 @@ class PostprocessingNode(Node):
         cuda.ipc_close_mem_handle(d_output)
 
 # this uses unified memory...
+
+stream = cv2.cuda_Stream()
+gpu_image = cv2.cuda_GpuMat(image.shape)
+gpu_image.upload(image, stream=stream)
+
+# Recolor the image on the GPU
+gpu_image = cv2.cuda.cvtColor(gpu_image, cv2.COLOR_BGR2GRAY, stream=stream)
+
+# Perform additional operations like resize
+resized_image = cv2.cuda.resize(gpu_image, (640, 480), stream=stream)
+
+# All operations happen within the GPU stream
+
+
+import cupy as cp
+stream = cp.cuda.Stream()
+
+with stream:
+    # Create a CuPy array (on GPU)
+    gpu_image = cp.array(np_image)  # np_image is the original CPU image
+
+    # Normalize the image in-place
+    cp.subtract(gpu_image, 128, out=gpu_image)  # In-place operation
+
+    # Transpose the image in-place
+    gpu_image = gpu_image.transpose((1, 0, 2))  # Change image axes
+
+
+# interoperability:
+import cv2
+import cupy as cp
+
+# Create a CUDA stream
+stream = cv2.cuda_Stream()
+
+# Allocate a GPU Mat in OpenCV
+gpu_image = cv2.cuda_GpuMat(image.shape)
+
+# Upload image to GPU in the stream
+gpu_image.upload(image, stream=stream)
+
+# Get GPU pointer and wrap it as a CuPy array (no CPU-GPU copy)
+ptr = gpu_image.cudaPtr()
+gpu_image_cupy = cp.ndarray(image.shape, cp.uint8, cp.cuda.MemoryPointer(cp.cuda.Memory(ptr), 0))
+
+# Perform CuPy operations (like normalization) in-place
+gpu_image_cupy = gpu_image_cupy / 255.0
+
+# retrieving CUDA stream handle from OpenCV CUDA stream object:
+stream = cv2.cuda.Stream()  # OpenCV CUDA stream
+cuda_stream = stream.cudaPtr()  # Extract the CUDA stream handle
+
+# pass it to TensorRT just like you would with a normal CUDA stream.
+import pycuda.driver as cuda
+import cupy as cp
+
+# Assuming d_input_ptr, d_output, self.d_input, self.d_output, and self.exec_context are already defined.
+cuda.memcpy_dtod_async(self.d_input, d_input_ptr, cp.prod(self.input_shape) * cp.dtype(cp.float32).itemsize, stream=cuda_stream)  # Copy input data to the allocated memory in TensorRT
+self.exec_context.execute_async_v2(bindings=[int(self.d_input), int(self.d_output)], stream_handle=cuda_stream)  # Execute inference asynchronously using the OpenCV CUDA stream handle
+output = cp.empty(self.output_shape, dtype=cp.float32)
+cuda.memcpy_dtod_async(output.data, self.d_output, stream=cuda_stream)  # Copy output to variable
+cuda.Stream.synchronize(cuda_stream)  # Synchronize the stream

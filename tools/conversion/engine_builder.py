@@ -139,3 +139,21 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     convert_onnx_to_trt(args.model_path, args.output_path, args.FP16, args.strip_weights, args.gs_optimize, args.verbose)
+
+# stripped:
+import tensorrt as trt
+
+# Create a builder and network
+builder = trt.Builder(trt.Logger(trt.Logger.WARNING))
+network = builder.create_network()
+
+# Define the engine configuration and specify optimizations
+config = builder.create_builder_config()
+config.set_flag(trt.BuilderFlag.STRICT_TYPES)
+
+# Build the engine
+engine = builder.build_engine(network, config)
+
+# Serialize and save the engine (this would be a stripped engine if no debug flags are set)
+with open("model_stripped.engine", "wb") as f:
+    f.write(engine.serialize())
