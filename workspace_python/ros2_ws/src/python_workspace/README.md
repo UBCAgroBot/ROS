@@ -3,8 +3,9 @@
 
 | Node Type         | Subscribes To | Publishes To                      | Example command |
 |-------------------|----------------|-----------------------------------|------|
-| Picture Node      | `/picture/command`                | `/input_image`        | `ros2 run python_workspace picture_node --ros-args -p static_image_path:='./../assets/maize' -p loop:=-1 -p frame_rate:=1`|
-| Inference Node    | `/input_image`            | -`/bounding_box_coordinates` <br> - `/output_img`             | `ros2 run python_workspace inference_node --ros-args -p weights_path:='../models/maize/Maize.pt'`|
+| Picture Node      | -                | `/input_image`        | `ros2 run python_workspace picture_node --ros-args -p static_image_path:='./../assets/maize' -p loop:=-1 -p frame_rate:=1`|
+| Inference Node    | `/input_image`            | -`/inference_out` <br> - `/output_img`             | `ros2 run python_workspace inference_node --ros-args -p weights_path:='../models/maize/Maize.pt'`|
+| Extermination Node    | `/inference_out`            | external binary        | `ros2 run python_workspace extermination_node`|
 
 
 ### List of Topics and Data Types
