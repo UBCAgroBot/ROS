@@ -12,8 +12,8 @@
 
 | Topic Name                  | Description                          | Data Type          |
 |-----------------------------|--------------------------------------|--------------------|
-| `/input_image`              | Input image for processing           | `sensor_msgs/Image`|
-| `/bounding_box_coordinates` | Coordinates of detected objects (xyxy)      | `std_msgs/Float32MultiArray` |
+| `/input_image`              | custom msg that sends raw image, processed image and velocity          | `custom_interface/msg/ImageInput`|
+| `/inference_out` | custom msg that passes inference output and raw image to extermination node | `custom_interface/msg/InferenceOutput` |
 | `/output_img`               | Processed output image               | `sensor_msgs/Image`|
 
 
@@ -26,7 +26,11 @@
 ros2 run python_workspace jetson_node
 
 #### Running the extermination node
-ros2 run python_workspace extermination_node
+```ros2 run python_workspace extermination_node```
+
+Without any additional arguments, this will also show a window with the drawn bounding boxes.
+To turn it off, 
+add the argument `--ros-args -p use_display_node:=false` to the command.
 #### Running the picture node:
 File paths are relative to the working directory
 
@@ -37,11 +41,15 @@ File paths are relative to the working directory
 The path for weights (.pt) is relative to the ROS/workspace_python/ros2_ws directory. 
 
 
-[text](../models/maize/Maize.pt)
 ```bash
 ros2 run python_workspace inference_node --ros-args -p weights_path:='../models/maize/Maize.pt'
 ```
 
+### Compiling new Changes
+```bash
+colcon build --packages-select custom_interface python_workspace
+source install/setup.bash
+```
 
 ### using RQT to view 
 #### Installing RQT on ROS 2 Humble
@@ -72,4 +80,3 @@ To view the image topic :
 3. select the name of the image topic you want to see
 
 
-source install/setup.bash
