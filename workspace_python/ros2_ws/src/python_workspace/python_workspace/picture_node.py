@@ -8,9 +8,13 @@ from rclpy.executors import MultiThreadedExecutor
 from sensor_msgs.msg import Image
 from std_msgs.msg import Header, String
 from cv_bridge import CvBridge
+import queue
+import numpy as np
+
+from .scripts.utils import ModelInference
+
 
 from custom_interfaces.msg import ImageInput                            # CHANGE
-
 # node to publish static image data to the /image topic. 
 # used for testing the inference pipelines.
 class PictureNode(Node):
@@ -31,19 +35,23 @@ class PictureNode(Node):
         self.frame_rate = self.get_parameter('frame_rate').get_parameter_value().integer_value
 
         self.bridge = CvBridge()
+        self.model = ModelInference()
 
         self.image_list = self.get_images()
         self.loop_count = 0
         self.image_counter = 0
 
+
         self.input_image_publisher = self.create_publisher(ImageInput, 'input_image', 10)
         timer_period = 1/self.frame_rate  # publish every 0.5 seconds
-        self.timer = self.create_timer(timer_period, self.publish_static_image)
+        self.timer = self.create_timer(timer_period * 2, self.publish_static_image)
 
            
-    def get_images(self):
+    def get_images(self)-> list[np.ndarray]:
         """
-        Returns a list of images in the form of ROS2 image messages from the path specified by the static_image_path parameter.
+        Returns a list of images in the form of cv images 
+        from the path specified by the static_image_path parameter.
+        This is to simulate having a stream of camera images
         """
         # You can technically read the img file as binary data rather than using cv2 to read it and then convert it into a ROS2 image message... and then converting it back to a numpy array in the inference node. But since the picture node is only for testing the MVP and we're not using the GPU yet the overhead here should not matter.
         if not os.path.exists(self.static_image_path):
@@ -66,23 +74,15 @@ class PictureNode(Node):
             return
         
         images = []
-        counter = 0
         for filename in image_paths:
-
+            # read images
             image = cv2.imread(filename, cv2.IMREAD_COLOR)
-            ros_image = self.bridge.cv2_to_imgmsg(image, encoding="bgr8")
             if image is None:
                 self.get_logger().error(f"Failed to read image: {filename}")
                 raise FileNotFoundError(f"Failed to read image: {filename}")
-            
-            image_msg = ImageInput()
-            # image_msg.header.frame_id = f'camera_frame{counter}'
-            image_msg.image = ros_image
-            image_msg.velocity = random.uniform(0, 2)
-
-            counter +=1
-
-            images.append(image_msg)
+                        
+            # add to the list of images
+            images.append(image)
 
         return images
 
@@ -95,9 +95,26 @@ class PictureNode(Node):
 
         # publish the image on the current pos to the image topic
         if self.loop == -1 or self.loop_count < self.loop:
+            #get image from list of uploaded
             position = self.image_counter % array_size
             self.get_logger().info(f"Publishing image {position + 1}/{array_size}")
-            self.input_image_publisher.publish(self.image_list[position])
+
+            raw_image = self.image_list[position]
+
+            #todo:  create the message to publish
+            postprocessed_img = self.model.preprocess(raw_image)
+            postprocessed_img_msg = self.bridge.cv2_to_imgmsg(postprocessed_img, encoding='rgb8')
+            raw_img_msg = self.bridge.cv2_to_imgmsg(raw_image, encoding='rgb8')
+
+            image_input = ImageInput()
+            image_input.header = Header()
+            image_input.header.frame_id = 'static_image'
+            image_input.raw_image = raw_img_msg
+            image_input.preprocessed_image = postprocessed_img_msg
+            image_input.velocity = random.uniform(0,1)
+
+            # publish image and increment whatever is needed
+            self.input_image_publisher.publish(image_input)
 
             self.image_counter += 1
             self.loop_count = self.image_counter // array_size
@@ -106,6 +123,13 @@ class PictureNode(Node):
             self.timer.cancel()
             self.get_logger().info("Finished publishing images")
             self.destroy_node()
+
+
+    def crop_with_velocity(self, image: np.ndarray, velocity: float):
+        """
+        Takes in an image and crops it with the velocity shift
+        """
+        return image
 
 def main(args=None):
     rclpy.init(args=args)
