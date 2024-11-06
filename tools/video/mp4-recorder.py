@@ -19,7 +19,7 @@ def record_zed_to_mp4(output_file="output.mp4", fps=30, duration=10):
         sys.exit(1)
 
     # Get the resolution of the ZED camera
-    image_size = zed.get_camera_information().camera_resolution
+    image_size = zed.get_camera_information().camera_configuration.resolution
     width = image_size.width
     height = image_size.height
 
