@@ -39,6 +39,7 @@ def record_zed_to_mp4(output_file="output.mp4", fps=30, duration=10):
 
     # Main loop
     frame_count = int(duration * fps)
+    start_time = time.time()
     for i in range(frame_count):
         # Grab the current image
         if zed.grab(runtime_parameters) == sl.ERROR_CODE.SUCCESS:
@@ -62,6 +63,11 @@ def record_zed_to_mp4(output_file="output.mp4", fps=30, duration=10):
             # if cv2.waitKey(1) & 0xFF == ord('q'):
             #     break
             
+            # Calculate the time to wait to maintain the frame rate
+            time_to_wait = (i + 1) / fps - (time.time() - start_time)
+            if time_to_wait > 0:
+                time.sleep(time_to_wait)
+            
         else:
             print("Frame grab failed")
             break
@@ -70,7 +76,7 @@ def record_zed_to_mp4(output_file="output.mp4", fps=30, duration=10):
     video_writer.release()
     zed.close()
     cv2.destroyAllWindows()
-    print(f"Video saved as {output_file}")
+    print(f"\nVideo saved as {output_file}")
 
 if __name__ == "__main__":
     # Parameters: output file name, FPS, duration in seconds
