@@ -52,10 +52,10 @@ def record_zed_to_mp4(output_file="output.mp4", fps=30, duration=10):
             # Write the frame to the video file
             video_writer.write(frame)
 
-            # Optional: Display the frame (press 'q' to exit early)
-            cv2.imshow("ZED Video", frame)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
+            # # Optional: Display the frame (press 'q' to exit early)
+            # cv2.imshow("ZED Video", frame)
+            # if cv2.waitKey(1) & 0xFF == ord('q'):
+            #     break
         else:
             print("Frame grab failed")
             break
