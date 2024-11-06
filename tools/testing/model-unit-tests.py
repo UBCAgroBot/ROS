@@ -2,6 +2,8 @@ import unittest
 import numpy as np
 from my_package.bbox_node import BBoxNode
 
+# class for handling results with class methods for MSE, etc.
+
 # get outputs of ultralytics and assert function diff between ultralytics and module vlaue is less than 0.5%
 # unit tests for also length of list (object count)
 
@@ -107,3 +109,101 @@ if __name__ == '__main__':
     unittest.main()
 
 # colcon test --packages-select my_package
+
+# given the predictions from the original model and the converted model, check if they are consistent
+# shape of predictions_original and converted_results should be the same
+# only checks for the predicted class (aka the argmax)
+# takes in two 2D arrays: first dimension is the number of samples,  second dimension is the number of classes and values correspond to confidence
+def checkPredictionConsistency(predictions_original, converted_results):
+    for n in range(predictions_original.shape[0]):
+        if np.argmax(predictions_original[n]) != np.argmax(converted_results[n]):
+            print(f"Original: {np.argmax(predictions_original[n])}, ONNX: {np.argmax(converted_results[n])}")
+            print(f"{predictions_original[n]}, \n{converted_results[n]}")
+            print("=====================================")
+            raise ValueError("Predictions are not consistent")
+
+    print("All predictions are consistent")
+
+# given the predictions from the original model and the converted model, check if they are consistent
+# shape of predictions_original and converted_results should be the same
+# only checks for the difference in confidence
+# takes in two 2D arrays: first dimension is the number of samples,  second dimension is the number of classes and values correspond to confidence
+# tolerance: the maximum difference in confidence that is allowed
+def checkConfidenceConsistency(predictions_original, converted_results, tolerance=1e-5):
+    np.testing.assert_allclose(predictions_original, converted_results,atol=tolerance)
+    # for n in range(predictions_original.shape[0]):
+    #     if not np.allclose(predictions_original[n], converted_results[n], atol=tolerance):
+    #         print(f"Original: \t {predictions_original[n]}, \nONNX: \t{converted_results[n]}")
+    #         print("=====================================")
+    #         return
+
+    print("All confidence percentages are consistent")
+
+# put random input shape into CUDA if using CUDA provider?
+def verify_onnx(model_path, compared_outputs, model_dimensions, fp_16):
+    print("Verifying the converted model")
+    onnx_output, onnx_inference = predict_onnx(model_path, fp_16, model_dimensions)
+    
+    print("ONNX inference time:", onnx_inference, "ms")
+    
+    # Calculate MSE (Mean Squared Error)
+    mse = np.mean((onnx_output - compared_outputs) ** 2)
+    print("MSE between ONNX and TensorRT outputs:", mse)
+
+    # Calculate MAE (Mean Absolute Error)
+    mae = np.mean(np.abs(onnx_output - compared_outputs))
+    print("MAE between ONNX and TensorRT outputs:", mae)
+    return 
+
+def preprocess_image(image_path, input_shape):
+    """Preprocess image for inference."""
+    image = cv2.imread(image_path)
+    image_resized = cv2.resize(image, (input_shape[1], input_shape[0]))
+    image = np.asarray(image_resized).astype(np.float32)
+    return np.transpose(image, (2, 0, 1)) / 255.0  # CHW format and normalized
+
+def run_benchmark(trt_model_path, test_images, ground_truth_path):
+    """Run benchmark on the model."""
+    # Load ground truth
+    ground_truth_bboxes = load_ground_truth(ground_truth_path)
+
+    # Initialize TensorRT inference
+    trt_infer = TRTInference(trt_model_path)
+    inputs, outputs, bindings, stream = trt_infer.allocate_buffers()
+
+    inference_times = []
+    iou_scores = []
+    centroid_offsets = []
+
+    for idx, img_path in enumerate(test_images):
+        # Preprocess image
+        image = preprocess_image(img_path, (300, 300))  # Adjust size as needed
+
+        # Perform inference and measure time
+        start_time = time.time()
+        pred_bbox = trt_infer.infer(image, inputs, outputs, bindings, stream)
+        inference_time = time.time() - start_time
+
+        # Compute IoU, centroid offset
+        gt_bbox = ground_truth_bboxes[idx]
+        iou_score = iou(pred_bbox, gt_bbox)
+        offset = calculate_centroid_offset(pred_bbox, gt_bbox)
+
+        # Store results
+        inference_times.append(inference_time)
+        iou_scores.append(iou_score)
+        centroid_offsets.append(offset)
+
+    # Summary of benchmark
+    print(f"Average Inference Time: {np.mean(inference_times):.4f} seconds")
+    print(f"Average IoU: {np.mean(iou_scores) * 100:.2f}%")
+    print(f"Average Centroid Offset: {np.mean(centroid_offsets):.2f}%")
+
+if __name__ == "__main__":
+    trt_model_path = "model.trt"  # Replace with your TensorRT model path
+    test_images = ["test1.jpg", "test2.jpg"]  # Replace with your test images
+    ground_truth_path = "ground_truth.txt"  # Replace with your ground truth file path
+
+    run_benchmark(trt_model_path, test_images, ground_truth_path)
+
+# Create performance report based on relative bounding box centroid for sample images (accuracy %, error offset %, etc.)

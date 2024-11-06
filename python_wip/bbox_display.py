@@ -49,6 +49,6 @@ def read_bounding_boxes(txt_file):
             bboxes.append((class_id, x_center, y_center, bbox_width, bbox_height))
     return bboxes
 
-os.chdir("C:/Users/ishaa/Coding Projects/Applied-AI/ROS/assets/maize")
+os.chdir("C:/Users/Ishaan/Coding Projects/ROS/assets/maize")
 boxes = read_bounding_boxes("IMG_2884_18.txt")
 draw_bounding_boxes("IMG_2884_18.JPG", boxes)
