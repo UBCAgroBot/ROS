@@ -10,7 +10,7 @@ def record_zed_to_mp4(output_file="output.mp4", fps=30, duration=10):
 
     # Set initialization parameters
     init_params = sl.InitParameters()
-    init_params.camera_resolution = sl.RESOLUTION.HD720  # Set resolution
+    init_params.camera_resolution = sl.RESOLUTION.HD1080  # Set resolution
     init_params.camera_fps = fps                         # Set FPS
 
     # Open the ZED camera
