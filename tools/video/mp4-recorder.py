@@ -51,7 +51,6 @@ def record_zed_to_mp4(output_file="output.mp4", fps=30, duration=10):
 
             # Convert ZED image to numpy array
             frame = zed_image.get_data()
-            frame = cv2.cvtColor(frame, cv2.COLOR_RGBA2RGB)  # Convert RGBA to RGB
 
             frames.append(frame)
             
@@ -68,10 +67,11 @@ def record_zed_to_mp4(output_file="output.mp4", fps=30, duration=10):
             print("Frame grab failed")
             break
     
-    print("finished recording frames, now compiling")
+    print("\nFinished recording frames, now compiling")
 
     # Write the frame to the video file
     for frame in frames:
+        frame = cv2.cvtColor(frame, cv2.COLOR_RGBA2RGB)  # Convert RGBA to RGB
         video_writer.write(frame)
 
     # Release resources
