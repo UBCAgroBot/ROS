@@ -37,6 +37,8 @@ def record_zed_to_mp4(output_file="output.mp4", fps=30, duration=10):
     # Prepare the runtime parameters
     runtime_parameters = sl.RuntimeParameters()
 
+    frames = []
+
     # Main loop
     frame_count = int(duration * fps)
     start_time = time.time()
@@ -51,8 +53,7 @@ def record_zed_to_mp4(output_file="output.mp4", fps=30, duration=10):
             frame = zed_image.get_data()
             frame = cv2.cvtColor(frame, cv2.COLOR_RGBA2RGB)  # Convert RGBA to RGB
 
-            # Write the frame to the video file
-            video_writer.write(frame)
+            frames.append(frame)
             
             # Print status update
             elapsed_time = i / fps
@@ -63,14 +64,15 @@ def record_zed_to_mp4(output_file="output.mp4", fps=30, duration=10):
             # if cv2.waitKey(1) & 0xFF == ord('q'):
             #     break
             
-            # Calculate the time to wait to maintain the frame rate
-            time_to_wait = (i + 1) / fps - (time.time() - start_time)
-            if time_to_wait > 0:
-                time.sleep(time_to_wait)
-            
         else:
             print("Frame grab failed")
             break
+    
+    print("finished recording frames, now compiling")
+
+    # Write the frame to the video file
+    for frame in frames:
+        video_writer.write(frame)
 
     # Release resources
     video_writer.release()
