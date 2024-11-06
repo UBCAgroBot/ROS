@@ -71,8 +71,8 @@ def record_zed_to_mp4(output_file="output.mp4", fps=30, duration=10):
 
     # Write the frame to the video file
     for frame in frames:
-        frame = cv2.cvtColor(frame, cv2.COLOR_RGBA2RGB)  # Convert RGBA to RGB
-        video_writer.write(frame)
+        new_frame = cv2.cvtColor(frame, cv2.COLOR_RGBA2RGB)  # Convert RGBA to RGB
+        video_writer.write(new_frame)
 
     # Release resources
     video_writer.release()
