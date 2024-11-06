@@ -82,4 +82,4 @@ def record_zed_to_mp4(output_file="output.mp4", fps=30, duration=10):
 
 if __name__ == "__main__":
     # Parameters: output file name, FPS, duration in seconds
-    record_zed_to_mp4("output.mp4", fps=30, duration=5)
+    record_zed_to_mp4("output.mp4", fps=30, duration=10)
