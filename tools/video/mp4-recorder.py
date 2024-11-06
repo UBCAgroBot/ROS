@@ -2,6 +2,7 @@ import sys
 import cv2
 import numpy as np
 import pyzed.sl as sl
+import time
 
 def record_zed_to_mp4(output_file="output.mp4", fps=30, duration=10):
     # Create a ZED camera object
@@ -9,7 +10,7 @@ def record_zed_to_mp4(output_file="output.mp4", fps=30, duration=10):
 
     # Set initialization parameters
     init_params = sl.InitParameters()
-    init_params.camera_resolution = sl.RESOLUTION.HD720  # Set resolution
+    init_params.camera_resolution = sl.RESOLUTION.HD1080  # Set resolution
     init_params.camera_fps = fps                         # Set FPS
 
     # Open the ZED camera
@@ -38,6 +39,7 @@ def record_zed_to_mp4(output_file="output.mp4", fps=30, duration=10):
 
     # Main loop
     frame_count = int(duration * fps)
+    start_time = time.time()
     for i in range(frame_count):
         # Grab the current image
         if zed.grab(runtime_parameters) == sl.ERROR_CODE.SUCCESS:
@@ -51,11 +53,17 @@ def record_zed_to_mp4(output_file="output.mp4", fps=30, duration=10):
 
             # Write the frame to the video file
             video_writer.write(frame)
+            
+            # Print status update
+            elapsed_time = time.time() - start_time
+            print(f"\rRecording... {elapsed_time:.2f}/{duration} seconds", end='')
 
             # # Optional: Display the frame (press 'q' to exit early)
             # cv2.imshow("ZED Video", frame)
             # if cv2.waitKey(1) & 0xFF == ord('q'):
             #     break
+            
+            
         else:
             print("Frame grab failed")
             break
