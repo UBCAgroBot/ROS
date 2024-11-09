@@ -15,7 +15,6 @@ from rclpy.executors import MultiThreadedExecutor
 from sensor_msgs.msg import Image
 from custom_interfaces.msg import InferenceOutput                            # CHANGE
 from .scripts.utils import ModelInference
-from std_msgs.msg import String  # Example message type
 
 # cuda.init()
 # device = cuda.Device(0)
@@ -24,7 +23,7 @@ from std_msgs.msg import String  # Example message type
 class ExterminationNode(Node):
     def __init__(self):
         super().__init__('extermination_node')
-    
+        
         self.declare_parameter('use_display_node', True)
         # self.declare_parameter('lower_range', [78, 158, 124]) #todo: make this a parameter
         # self.declare_parameter('upper_range', [60, 255, 255])
@@ -49,23 +48,25 @@ class ExterminationNode(Node):
         #     side_topic = 'right_array_data'
         #     if self.use_display_node:
         #         self.window = "Right Camera"
-
+        
         self.boxes_present = 0
         self.window = "Left Camera"
         self.model = ModelInference()
         self.bridge = CvBridge()
         # Open serial port to Arduino
         self.ser = serial.Serial('/dev/ttyACM0', 115200, timeout=1)
-        self.subscription = self.create_subscription(InferenceOutput, 'inference_out', self.inference_callback, 10)
-
+        
         # Create a timer that calls the listener_callback every second
         self.timer = self.create_timer(1.0, self.timer_callback)
-
+        
+        self.subscription = self.create_subscription(InferenceOutput, 'inference_out', self.inference_callback, 10)
         time.sleep(2)  # Wait for Arduino to reset
+
 
     def inference_callback(self, msg):
         preprocessed_image = self.bridge.imgmsg_to_cv2(msg.preprocessed_image, desired_encoding='passthrough')
         raw_image = self.bridge.imgmsg_to_cv2(msg.raw_image, desired_encoding='passthrough')
+
 
         bounding_boxes = self.model.postprocess(msg.confidences.data,msg.bounding_boxes.data, raw_image,msg.velocity)
         
@@ -86,6 +87,7 @@ class ExterminationNode(Node):
         serialized_msg = str(self.boxes_present) + '\n'  # Add a newline as a delimiter
         self.ser.write(serialized_msg.encode())
         self.get_logger().info(f'Sent to Arduino: {self.boxes_present}')
+
 
 def main(args=None):
     rclpy.init(args=args)

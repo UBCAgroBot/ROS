@@ -79,4 +79,3 @@ To view the image topic :
 2. click refresh topic 
 3. select the name of the image topic you want to see
 
-
