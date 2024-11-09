@@ -12,8 +12,8 @@ logging.basicConfig(format='%(message)s', level=logging.INFO)
 # relative path
 # make a dict for each image, with inference time
 # add gpu support (conditional imports)
-
 # should take gpu support in here
+# load model
 
 class Model:
     def __init__(self, model_path=None, onnx_model=None, input_size=(640, 640)):

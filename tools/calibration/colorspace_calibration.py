@@ -106,7 +106,6 @@ def color_calibrator(image_path='C:/Users/ishaa/Coding Projects/ROS/assets/maize
         frame = cv2.hconcat([myObject, color_square])
         
         cv2.imshow('colorspace calibration', frame)
-
         key = cv2.waitKey(1)
         if key == ord('q'):
             cv2.destroyAllWindows()

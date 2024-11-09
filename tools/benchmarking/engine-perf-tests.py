@@ -8,7 +8,7 @@
 
 import os
 # need imports for inference module
-from utils import pre-process, postprocess
+from utils import preprocess, postprocess
 
 def verify_path(trt_engine_path=None):
     pass
