@@ -37,7 +37,6 @@ class CameraNode(Node):
         self.precision = self.get_parameter('precision').get_parameter_value().string_value
 
         self.pointer_publisher = self.create_publisher(String, 'preprocessing_done', 10)
-        self.image_service = self.create_service(Image, 'image_data', self.image_callback)
         
         self.velocity = [0, 0, 0]
         self.image_queue = queue.Queue()
