@@ -1,6 +1,6 @@
 import time, os
 import cv2
-import serial # pip3 install pyserial
+import serial
 # import pycuda.driver as cuda
 # from tracker import *
 # depth point cloud here...
@@ -55,7 +55,7 @@ class ExterminationNode(Node):
         self.model = ModelInference()
         self.bridge = CvBridge()
         # Open serial port to Arduino
-        self.ser = serial.Serial('/dev/ttyUSB0', 115200, timeout=1)  # Adjust USB port as needed
+        self.ser = serial.Serial('/dev/ttyACM0', 115200, timeout=1)
         self.subscription = self.create_subscription(InferenceOutput, 'inference_out', self.inference_callback, 10)
 
         # Create a timer that calls the listener_callback every second
@@ -86,7 +86,6 @@ class ExterminationNode(Node):
         serialized_msg = str(self.boxes_present) + '\n'  # Add a newline as a delimiter
         self.ser.write(serialized_msg.encode())
         self.get_logger().info(f'Sent to Arduino: {self.boxes_present}')
-
 
 def main(args=None):
     rclpy.init(args=args)

@@ -27,7 +27,7 @@ class CameraNode(Node):
         self.declare_parameter('camera_side', 'left') # left, right
         self.declare_parameter('shift_constant', 1)
         self.declare_parameter('roi_dimensions', [0, 0, 100, 100])  
-        self.declare_paramter('precision', 'fp32')      
+        self.declare_parameter('precision', 'fp32')      
         
         self.frame_rate = self.get_parameter('frame_rate').get_parameter_value().integer_value
         self.dimensions = tuple(self.get_parameter('model_dimensions').get_parameter_value().integer_array_value)

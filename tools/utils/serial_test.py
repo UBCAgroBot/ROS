@@ -8,8 +8,7 @@ def display_ports():
     for port in ports:
         print(port.device)
 
-# /dev/ttyUSB0 for linux?
-
+# /dev/ttyACM0 for vertical port
 def connect(port):
     ser = serial.Serial(port, 115200, timeout=1)  # Adjust USB port as needed
     while True:
@@ -22,7 +21,5 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Serial port communication')
     parser.add_argument('--port', type=str, required=True, help='Serial port to connect to')
     args = parser.parse_args()
-    
     display_ports()
-    
     connect(args.port)
