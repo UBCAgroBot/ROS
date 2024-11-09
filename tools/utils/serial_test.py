@@ -11,7 +11,7 @@ def display_ports():
 # /dev/ttyUSB0 for linux?
 
 def connect(port):
-    ser = serial.Serial('COM3', 115200, timeout=1)  # Adjust USB port as needed
+    ser = serial.Serial(port, 115200, timeout=1)  # Adjust USB port as needed
     while True:
         serialized_msg = str(1) + '\n'  # Add a newline as a delimiter
         ser.write(serialized_msg.encode())
