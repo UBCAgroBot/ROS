@@ -21,7 +21,7 @@ class PictureNode(Node):
     def __init__(self):
         super().__init__('picture_node')
 
-        self.declare_parameter('static_image_path', '/home/usr/Desktop/ROS/maize/assets/IMG_1822_14.JPG')
+        self.declare_parameter('static_image_path', '/home/usr/ROS/maize/assets/IMG_1822_14.JPG')
         self.declare_parameter('loop', 0)  # 0 = don't loop, >0 = # of loops, -1 = loop forever
         self.declare_parameter('frame_rate', 1)  # Desired frame rate for publishing
         
