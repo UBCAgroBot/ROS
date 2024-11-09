@@ -1,5 +1,5 @@
 
-# Custom Interfaces in ROS2
+# Custom Interface Package
 
 This interface uses the ROS2 tutorial on custom interfaces:
 [ROS2 Custom Interfaces Tutorial](https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries/Custom-ROS2-Interfaces.html)
@@ -8,19 +8,16 @@ Instructions to use the custom message or services can be found here:
 [ROS2 Custom Interfaces Tutorial](https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries/Custom-ROS2-Interfaces.html)
 
 
-Custom message
-type name description
-x-velocity int64 x-velocity of the camera
-b-box int64 array array of bounding boxes
-
-
-
 ## Re building the custom message interface
+> **Note:** Ensure that this is run from the main workspace directory (`ros2_ws`).
+
 ```sh
 colcon build --packages-select custom_interfaces
 ```
 
 ## Fun ROS2 Commands
+> **Note:** These should also be run from the main workspace directory
+
 
 ### Show All Messages and Services
 Use the `-m` flag to show only messages:
