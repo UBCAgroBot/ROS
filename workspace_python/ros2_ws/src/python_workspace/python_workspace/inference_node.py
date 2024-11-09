@@ -1,3 +1,4 @@
+import time
 import os
 from cv_bridge import CvBridge
 import time
@@ -6,10 +7,8 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image
 from std_msgs.msg import Int32MultiArray, Float32MultiArray
 from .scripts.utils import ModelInference
-from custom_interfaces.msg import ImageInput, InferenceOutput                            # CHANGE
+from custom_interfaces.msg import ImageInput, InferenceOutput
 
-
-# for a service implementation: https://robotics.stackexchange.com/questions/88791/ros2-how-to-call-a-service-from-the-callback-function-of-a-subscriber
 class InferenceNode(Node):
     def __init__(self):
         super().__init__('inference_node')
