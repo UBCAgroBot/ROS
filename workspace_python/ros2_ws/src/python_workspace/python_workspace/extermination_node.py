@@ -66,10 +66,7 @@ class ExterminationNode(Node):
     def inference_callback(self, msg):
         preprocessed_image = self.bridge.imgmsg_to_cv2(msg.preprocessed_image, desired_encoding='passthrough')
         raw_image = self.bridge.imgmsg_to_cv2(msg.raw_image, desired_encoding='passthrough')
-
-
         bounding_boxes = self.model.postprocess(msg.confidences.data,msg.bounding_boxes.data, raw_image,msg.velocity)
-        
         final_image = self.model.draw_boxes(raw_image,bounding_boxes,velocity=msg.velocity)
 
         if self.use_display_node:
@@ -86,8 +83,9 @@ class ExterminationNode(Node):
         # Serialize and send the message to Arduino
         serialized_msg = str(self.boxes_present) + '\n'  # Add a newline as a delimiter
         self.ser.write(serialized_msg.encode())
+        bytes = len(serialized_msg.encode())
+        self.get_logger().info(f'Sent {bytes} to Arduino')
         self.get_logger().info(f'Sent to Arduino: {self.boxes_present}')
-
 
 def main(args=None):
     rclpy.init(args=args)
