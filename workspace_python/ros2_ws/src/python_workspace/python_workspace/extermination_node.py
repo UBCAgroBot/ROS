@@ -54,7 +54,7 @@ class ExterminationNode(Node):
         self.model = ModelInference()
         self.bridge = CvBridge()
         # Open serial port to Arduino
-        self.ser = serial.Serial('/dev/ttyACM0', 115200, timeout=1)
+        # self.ser = serial.Serial('/dev/ttyACM0', 115200, timeout=1)
         
         # Create a timer that calls the listener_callback every second
         self.timer = self.create_timer(1.0, self.timer_callback)
@@ -82,7 +82,7 @@ class ExterminationNode(Node):
     def timer_callback(self):
         # Serialize and send the message to Arduino
         serialized_msg = str(self.boxes_present) + '\n'  # Add a newline as a delimiter
-        self.ser.write(serialized_msg.encode())
+        # self.ser.write(serialized_msg.encode())
         bytes = len(serialized_msg.encode())
         self.get_logger().info(f'Sent {bytes} to Arduino')
         self.get_logger().info(f'Sent to Arduino: {self.boxes_present}')
