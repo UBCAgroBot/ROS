@@ -94,8 +94,9 @@ class CameraNode(Node):
     def preprocess_image(self, image):
         tic = time.perf_counter_ns()
         roi_x1, roi_y1, roi_x2, roi_y2 = self.roi_dimensions
-        shifted_x1 = int(roi_x1 + abs(self.velocity[0]) * self.shift_constant)
-        shifted_x2 = int(roi_x2 + abs(self.velocity[0]) * self.shift_constant)
+        velocity = self.velocity[0]
+        shifted_x1 = int(roi_x1 + abs(velocity) * self.shift_constant)
+        shifted_x2 = int(roi_x2 + abs(velocity) * self.shift_constant)
 
         preprocessed_img = image[int(roi_y1):int(roi_y2), shifted_x1:shifted_x2, :3] # replace w/ util
         preprocessed_img = cv2.resize(preprocessed_img, self.model_dimensions) # check if necessary?
@@ -109,10 +110,11 @@ class CameraNode(Node):
         image_input.header.frame_id = 'static_image' # fix
         image_input.raw_image = raw_img_msg
         image_input.preprocessed_image = preprocessed_img_msg
-        image_input.velocity = self.velocity[0]
+        print(repr(round(velocity, 2)))
+        image_input.velocity = round(velocity, 2)
         self.input_image_publisher.publish(image_input)
         toc = time.perf_counter_ns()
-        self.get_logger().info(f"Velocity retrieved: {self.velocity[0]}")
+        self.get_logger().info(f"Velocity retrieved: {image_input.velocity}")
         self.get_logger().info(f"Preprocessing: {(toc-tic)/1e6} ms")
 
 
