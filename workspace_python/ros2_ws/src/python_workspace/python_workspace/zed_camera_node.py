@@ -19,7 +19,7 @@ class CameraNode(Node):
 
         self.declare_parameter('camera_side', 'left')
         self.declare_parameter('shift_constant', 0)
-        self.declare_parameter('roi_dimensions', [0, 0, 100, 100])  
+        self.declare_parameter('roi_dimensions', (0, 0, 100, 100))  
         
         self.camera_side = self.get_parameter('camera_side').get_parameter_value().string_value
         self.shift_constant = self.get_parameter('shift_constant').get_parameter_value().integer_value
@@ -94,12 +94,10 @@ class CameraNode(Node):
     def preprocess_image(self, image):
         tic = time.perf_counter_ns()
         roi_x1, roi_y1, roi_x2, roi_y2 = self.roi_dimensions
-        shifted_x1 = roi_x1 + abs(self.velocity[0]) * self.shift_constant
-        shifted_x2 = roi_x2 + abs(self.velocity[0]) * self.shift_constant
+        shifted_x1 = int(roi_x1 + abs(self.velocity[0]) * self.shift_constant)
+        shifted_x2 = int(roi_x2 + abs(self.velocity[0]) * self.shift_constant)
 
-        # replace with util...
-        
-        preprocessed_img = image[roi_y1:roi_y2, shifted_x1:shifted_x2, :3]
+        preprocessed_img = image[int(roi_y1):int(roi_y2), shifted_x1:shifted_x2, :3] # replace w/ util
         preprocessed_img = cv2.resize(preprocessed_img, self.model_dimensions) # check if necessary?
         preprocessed_img_msg = self.bridge.cv2_to_imgmsg(preprocessed_img, encoding='rgb8')
         
