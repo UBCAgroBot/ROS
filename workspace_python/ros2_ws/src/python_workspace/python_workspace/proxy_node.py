@@ -13,9 +13,10 @@ class ProxyNode(Node):
         
         self.declare_parameter('usb_port', '/dev/ttyACM0')
         self.port = self.get_parameter('usb_port').get_parameter_value().string_value
+        
         try:
-            self.ser = serial.Serial(port, 115200, timeout=1)
-        except exception as E:
+            self.ser = serial.Serial(self.port, 115200, timeout=1)
+        except Exception as e:
             self.get_logger().error(f"Failed to connect to serial port: {e}")
             
         self.subscription = self.create_subscription(Integer, 'extermination_left', self.left_callback, 10)
