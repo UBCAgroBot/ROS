@@ -64,7 +64,7 @@ class CameraNode(Node):
             err = zed.grab(runtime)
             if err == sl.ERROR_CODE.SUCCESS:
                 zed.retrieve_image(image_zed, sl.VIEW.LEFT_UNRECTIFIED)
-                if self.side == 'left':
+                if self.camera_side == 'left':
                     zed.retrieve_image(image_zed, sl.VIEW.LEFT_UNRECTIFIED)
                 else:
                     zed.retrieve_image(image_zed, sl.VIEW.RIGHT_UNRECTIFIED)
