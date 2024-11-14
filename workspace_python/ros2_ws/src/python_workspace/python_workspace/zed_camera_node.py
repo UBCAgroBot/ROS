@@ -27,9 +27,9 @@ class CameraNode(Node):
 
         self.input_image_publisher = self.create_publisher(ImageInput, f'{self.camera_side}_input_image', 10)
         
-        self.frame_rate = 0
+        self.frame_rate = 30
         self.model_dimensions = (640, 640)
-        self.velocity = [0, 0, 0]
+        self.velocity = 0
         self.bridge = CvBridge()
         self.left_camera_serial_number = 26853647
         self.right_camera_serial_number = 0
@@ -39,7 +39,7 @@ class CameraNode(Node):
         zed = sl.Camera()
         init = sl.InitParameters()
         init.camera_resolution = sl.RESOLUTION.HD1080
-        init.camera_fps = 30
+        init.camera_fps = self.frame_rate
         
         if self.camera_side == 'left':
             init.set_from_serial_number(self.left_camera_serial_number)
@@ -56,7 +56,7 @@ class CameraNode(Node):
         
         runtime = sl.RuntimeParameters()
         image_zed = sl.Mat()
-        sensors_data = sl.SensorsData()
+        sensor_data = sl.SensorsData()
         previous_velocity = cp.array([0.0, 0.0, 0.0])
         previous_time = time.time()
         
@@ -69,19 +69,23 @@ class CameraNode(Node):
                 else:
                     zed.retrieve_image(image_zed, sl.VIEW.RIGHT_UNRECTIFIED)
                 
-                zed.get_sensors_data(sensors_data, sl.TIME_REFERENCE.IMAGE)
-                accel_data = sensors_data.get_imu_data().get_linear_acceleration()
+                zed.get_sensors_data(sensor_data, sl.TIME_REFERENCE.IMAGE)
+                zed_imu = sensor_data.get_imu_data()
+                acceleration = [0,0,0]
+                zed_imu.get_linear_acceleration(acceleration)
+                ax, ay, az = round(acceleration[0], 3), round(acceleration[1], 3), round(acceleration[2], 3)
+                print("IMU Acceleration: Ax: {0}, Ay: {1}, Az {2}\n".format(ax, ay, az))
                 
                 # Calculate velocity (v = u + at)
-                current_time = time.time()
-                delta_time = current_time - previous_time
-                acceleration = cp.array([accel_data[0], accel_data[1], accel_data[2]])
-                velocity = previous_velocity + acceleration * delta_time
-                self.velocity = velocity
-                previous_velocity = velocity
-                previous_time = current_time
+                # current_time = time.time()
+                # delta_time = current_time - previous_time
+                # acceleration = cp.array([ax, ay, az])
+                # velocity = previous_velocity + acceleration * delta_time
+                # self.velocity = velocity
+                # previous_velocity = velocity
+                # previous_time = current_time
+                
                 cv_image = image_zed.get_data()  
-                # self.image_queue.put((cv_image, velocity[0]))
                 self.preprocess_image(cv_image)
                 time.sleep(1.0 / self.frame_rate)
                 
@@ -94,9 +98,10 @@ class CameraNode(Node):
     def preprocess_image(self, image):
         tic = time.perf_counter_ns()
         roi_x1, roi_y1, roi_x2, roi_y2 = self.roi_dimensions
-        velocity = self.velocity[0]
+        velocity = float(self.velocity[0])
         shifted_x1 = int(roi_x1 + abs(velocity) * self.shift_constant)
         shifted_x2 = int(roi_x2 + abs(velocity) * self.shift_constant)
+        velocity = round(velocity, 2)
 
         preprocessed_img = image[int(roi_y1):int(roi_y2), shifted_x1:shifted_x2, :3] # replace w/ util
         preprocessed_img = cv2.resize(preprocessed_img, self.model_dimensions) # check if necessary?
@@ -110,11 +115,10 @@ class CameraNode(Node):
         image_input.header.frame_id = 'static_image' # fix
         image_input.raw_image = raw_img_msg
         image_input.preprocessed_image = preprocessed_img_msg
-        print(repr(round(velocity, 2)))
-        image_input.velocity = round(velocity, 2)
+        image_input.velocity = velocity
         self.input_image_publisher.publish(image_input)
         toc = time.perf_counter_ns()
-        self.get_logger().info(f"Velocity retrieved: {image_input.velocity}")
+        self.get_logger().info(f"Velocity retrieved: {velocity}")
         self.get_logger().info(f"Preprocessing: {(toc-tic)/1e6} ms")
 
 
