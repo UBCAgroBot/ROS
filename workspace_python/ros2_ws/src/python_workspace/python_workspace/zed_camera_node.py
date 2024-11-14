@@ -31,6 +31,8 @@ class CameraNode(Node):
         self.model_dimensions = (640, 640)
         self.velocity = [0, 0, 0]
         self.bridge = CvBridge()
+        self.left_camera_serial_number = 26853647
+        self.right_camera_serial_number = 0
         self.publish_zed_frames()
     
     def publish_zed_frames(self):
@@ -40,9 +42,9 @@ class CameraNode(Node):
         init.camera_fps = 30
         
         if self.camera_side == 'left':
-            init.camera_linux_id = 0
+            init.set_from_serial_number(self.left_camera_serial_number)
         elif self.camera_side == 'right':
-            init.camera_linux_id = 1
+            init.set_from_serial_number(self.right_camera_serial_number)
             self.shift_constant *= -1
         
         if not zed.is_opened():
