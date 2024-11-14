@@ -106,10 +106,10 @@ class CameraNode(Node):
         
         image_input = ImageInput()
         image_input.header = Header()
-        image_input.header.frame_id = 'static_image' # fix with velocity....
+        image_input.header.frame_id = 'static_image' # fix
         image_input.raw_image = raw_img_msg
         image_input.preprocessed_image = preprocessed_img_msg
-        image_input.velocity = 0
+        image_input.velocity = self.velocity[0]
         self.input_image_publisher.publish(image_input)
         toc = time.perf_counter_ns()
         self.get_logger().info(f"Velocity retrieved: {self.velocity[0]}")
