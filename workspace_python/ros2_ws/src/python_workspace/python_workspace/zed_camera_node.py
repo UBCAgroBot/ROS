@@ -63,11 +63,12 @@ class CameraNode(Node):
         while rclpy.ok():
             err = zed.grab(runtime)
             if err == sl.ERROR_CODE.SUCCESS:
-                zed.retrieve_image(image_zed, sl.VIEW.LEFT_RECTIFIED)
+                zed.retrieve_image(image_zed, sl.VIEW.LEFT_UNRECTIFIED)
                 if self.side == 'left':
-                    zed.retrieve_image(image_zed, sl.VIEW.LEFT_RECTIFIED)
+                    zed.retrieve_image(image_zed, sl.VIEW.LEFT_UNRECTIFIED)
                 else:
-                    zed.retrieve_image(image_zed, sl.VIEW.RIGHT_RECTIFIED)
+                    zed.retrieve_image(image_zed, sl.VIEW.RIGHT_UNRECTIFIED)
+                
                 zed.get_sensors_data(sensors_data, sl.TIME_REFERENCE.IMAGE)
                 accel_data = sensors_data.get_imu_data().get_linear_acceleration()
                 
