@@ -5,7 +5,7 @@ import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image
 from std_msgs.msg import Int32MultiArray, Float32MultiArray
-from .scripts.utils import ModelInference
+from .scripts.utils import initialise_model, run_inference
 from custom_interfaces.msg import ImageInput, InferenceOutput                            # CHANGE
 
 
@@ -25,7 +25,7 @@ class InferenceNode(Node):
         self.precision = self.get_parameter('precision').get_parameter_value().string_value
 
         # instantiate the model here
-        self.model = ModelInference(self.weights_path, self.precision)
+        self.model = initialise_model(self.weights_path, self.precision)
         
         self.bridge = CvBridge()
 
@@ -39,7 +39,7 @@ class InferenceNode(Node):
     def image_callback(self, msg):
         # print("============================================")
         opencv_img = self.bridge.imgmsg_to_cv2(msg.preprocessed_image, desired_encoding='passthrough')
-        output_img, confidences, boxes = self.model.inference(opencv_img)
+        output_img, confidences, boxes = run_inference(self.model,opencv_img)
 
         # publish bounding box etc as inference output
         output_msg = InferenceOutput()

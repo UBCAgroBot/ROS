@@ -11,7 +11,7 @@ from cv_bridge import CvBridge
 import queue
 import numpy as np
 
-from .scripts.utils import ModelInference
+from .scripts.utils import preprocess
 
 
 from custom_interfaces.msg import ImageInput                            # CHANGE
@@ -35,7 +35,6 @@ class PictureNode(Node):
         self.frame_rate = self.get_parameter('frame_rate').get_parameter_value().integer_value
 
         self.bridge = CvBridge()
-        self.model = ModelInference()
 
         self.image_list = self.get_images()
         self.loop_count = 0
@@ -102,7 +101,7 @@ class PictureNode(Node):
             raw_image = self.image_list[position]
 
             #todo:  create the message to publish
-            postprocessed_img = self.model.preprocess(raw_image)
+            postprocessed_img = preprocess(raw_image)
             postprocessed_img_msg = self.bridge.cv2_to_imgmsg(postprocessed_img, encoding='rgb8')
             raw_img_msg = self.bridge.cv2_to_imgmsg(raw_image, encoding='rgb8')
 
