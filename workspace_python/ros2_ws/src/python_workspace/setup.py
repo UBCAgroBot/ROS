@@ -22,12 +22,11 @@ setup(
     license='Apache License 2.0',
     entry_points={
         'console_scripts': [
-            'video_node = python_workspace.video_node:main',
-            'camera_node = python_workspace.zed_camera_node:main',
-            'picture_node = python_workspace.picture_node:main',
+            'camera_node = python_workspace.camera_node:main',
             'inference_node = python_workspace.inference_node:main',
-            'jetson_node = python_workspace.jetson_node:main',
-            'extermination_node = python_workspace.extermination_node:main'
+            'extermination_node = python_workspace.extermination_node:main',
+            'proxy_node = python_workspace.proxy_node:main',
+            'picture_node = python_workspace.picture_node:main' # remove later
         ],
     },
 

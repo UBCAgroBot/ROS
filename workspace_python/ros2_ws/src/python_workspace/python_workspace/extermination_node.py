@@ -1,91 +1,60 @@
-import time, os
 import cv2
-import serial
-# import pycuda.driver as cuda
-# from tracker import *
-# depth point cloud here...
-# add object counter
-from cv_bridge import CvBridge
 
 import rclpy
 from rclpy.time import Time
 from rclpy.node import Node
-# from std_msgs.msg import Header, String, Integer
 from rclpy.executors import MultiThreadedExecutor
-from sensor_msgs.msg import Image
-from custom_interfaces.msg import InferenceOutput                            # CHANGE
-from .scripts.utils import ModelInference
+from cv_bridge import CvBridge
 
-# cuda.init()
-# device = cuda.Device(0)
-# cuda_driver_context = device.make_context()
+from sensor_msgs.msg import Image
+from std_msgs.msg import Header, Bool
+from custom_interfaces.msg import InferenceOutput
+
+from .scripts.utils import ModelInference
 
 class ExterminationNode(Node):
     def __init__(self):
         super().__init__('extermination_node')
         
         self.declare_parameter('use_display_node', True)
-        # self.declare_parameter('lower_range', [78, 158, 124]) #todo: make this a parameter
-        # self.declare_parameter('upper_range', [60, 255, 255])
-        # self.declare_parameter('min_area', 100)
-        # self.declare_parameter('min_confidence', 0.5)
-        # self.declare_parameter('roi_list', [0,0,100,100])
-        # self.declare_parameter('publish_rate', 10)
-        # self.declare_parameter('side', 'left')
-        
+        self.declare_parameter('camera_side', 'left')
         self.use_display_node = self.get_parameter('use_display_node').get_parameter_value().bool_value
-        # self.lower_range = self.get_parameter('lower_range').get_parameter_value().integer_array_value
-        # self.upper_range = self.get_parameter('upper_range').get_parameter_value().integer_array_value
-        # self.min_area = self.get_parameter('min_area').get_parameter_value().integer_value
-        # self.min_confidence = self.get_parameter('min_confidence').get_parameter_value().double_value
-        # self.roi_list = self.get_parameter('roi_list').get_parameter_value().integer_array_value
-        # self.publish_rate = self.get_parameter('publishsource install/setup.bash
-        # if self.side == "left":
-        #     side_topic = 'left_array_data'
-        #     if self.use_display_node:
-        #         self.window = "Left Camera"
-        # else:
-        #     side_topic = 'right_array_data'
-        #     if self.use_display_node:
-        #         self.window = "Right Camera"
+        self.camera_side = self.get_parameter('camera_side').get_parameter_value().string_value
         
+        self.window = "Left Camera" if self.camera_side == "left" else "Right Camera" if self.use_display_node else None
+        
+        self.lower_range = [78, 158, 124]
+        self.upper_range = [60, 255, 255]
+        self.minimum_area = 100
+        self.minimum_confidence = 0.5
         self.boxes_present = 0
-        self.window = "Left Camera"
         self.model = ModelInference()
         self.bridge = CvBridge()
-        # Open serial port to Arduino
-        # self.ser = serial.Serial('/dev/ttyACM0', 115200, timeout=1)
         
-        # Create a timer that calls the listener_callback every second
-        self.timer = self.create_timer(1.0, self.timer_callback)
-        
-        self.subscription = self.create_subscription(InferenceOutput, 'inference_out', self.inference_callback, 10)
-        time.sleep(2)  # Wait for Arduino to reset
+        self.inference_subscription = self.create_subscription(InferenceOutput, f'{self.camera_side}_inference_output', self.inference_callback, 10)
+        self.box_publisher = self.create_publisher(Bool, f'{self.camera_side}_extermination_output', 10)
 
 
     def inference_callback(self, msg):
-        preprocessed_image = self.bridge.imgmsg_to_cv2(msg.preprocessed_image, desired_encoding='passthrough')
+        preprocessed_image = self.bridge.imgmsg_to_cv2(msg.preprocessed_image, desired_encoding='passthrough') # what is this needed for?
         raw_image = self.bridge.imgmsg_to_cv2(msg.raw_image, desired_encoding='passthrough')
         bounding_boxes = self.model.postprocess(msg.confidences.data,msg.bounding_boxes.data, raw_image,msg.velocity)
         final_image = self.model.draw_boxes(raw_image,bounding_boxes,velocity=msg.velocity)
 
         if self.use_display_node:
-        # Create a CUDA window and display the cv_image
-            cv2.imshow('CUDA Window', final_image)
+            cv2.imshow(self.window, final_image)
             cv2.waitKey(10)
 
         if len(bounding_boxes) > 0:
-            self.boxes_present = 1
+            self.boxes_present = True
         else:
-            self.boxes_present = 0
-
-    def timer_callback(self):
-        # Serialize and send the message to Arduino
-        serialized_msg = str(self.boxes_present) + '\n'  # Add a newline as a delimiter
-        # self.ser.write(serialized_msg.encode())
-        bytes = len(serialized_msg.encode())
-        self.get_logger().info(f'Sent {bytes} to Arduino')
-        self.get_logger().info(f'Sent to Arduino: {self.boxes_present}')
+            self.boxes_present = False
+        
+        boxes_msg = Bool()
+        boxes_msg.data = self.boxes_present
+        self.box_publisher.publish(boxes_msg)
+        self.get_logger().info("Published results to Proxy Node")
+        
 
 def main(args=None):
     rclpy.init(args=args)
@@ -94,6 +63,8 @@ def main(args=None):
     executor.add_node(extermination_node)
     try:
         executor.spin()
+    except KeyboardInterrupt:
+        print("Shutting down extermination node")
     finally:
         executor.shutdown()
         extermination_node.destroy_node()

@@ -13,7 +13,6 @@ import numpy as np
 
 from .scripts.utils import ModelInference
 
-
 from custom_interfaces.msg import ImageInput                            # CHANGE
 # node to publish static image data to the /image topic. 
 # used for testing the inference pipelines.
@@ -21,10 +20,9 @@ class PictureNode(Node):
     def __init__(self):
         super().__init__('picture_node')
 
-        self.declare_parameter('static_image_path', '/home/usr/Desktop/ROS/assets/IMG_1822_14.JPG')
-        self.declare_parameter('loop', 0)  # 0 = don't loop, >0 = # of loops, -1 = loop forever
+        self.declare_parameter('static_image_path', '/home/usr/ROS/assets/maize/IMG_1822_14.JPG')
+        self.declare_parameter('loop', -1)  # 0 = don't loop, >0 = # of loops, -1 = loop forever
         self.declare_parameter('frame_rate', 1)  # Desired frame rate for publishing
-
         
         self.static_image_path = self.get_parameter('static_image_path').get_parameter_value().string_value
         # Resolve the path programmatically
@@ -40,7 +38,6 @@ class PictureNode(Node):
         self.image_list = self.get_images()
         self.loop_count = 0
         self.image_counter = 0
-
 
         self.input_image_publisher = self.create_publisher(ImageInput, 'input_image', 10)
         timer_period = 1/self.frame_rate  # publish every 0.5 seconds
