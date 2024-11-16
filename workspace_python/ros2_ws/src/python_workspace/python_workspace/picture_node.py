@@ -5,7 +5,7 @@ import rclpy
 from rclpy.time import Time
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import Image, Header, Int
 from std_msgs.msg import Header, String
 from cv_bridge import CvBridge
 import queue
@@ -54,6 +54,8 @@ class PictureNode(Node):
         if not os.path.exists(self.static_image_path):
             self.get_logger().error(f"Static image not found at {self.static_image_path}")
             raise FileNotFoundError(f"Static image not found at {self.static_image_path}")
+        
+        filename = self.static_image_path
         
         image_paths = []
         if os.path.isfile(self.static_image_path) \

@@ -5,9 +5,13 @@ from launch.substitutions import LaunchConfiguration
 
 def generate_launch_description():
     return LaunchDescription([
-        DeclareLaunchArgument('static_image_path', default_value='/home/usr/ROS/maize/assets/IMG_1822_14.JPG',description='The path to the static image for CameraNode'),
+        DeclareLaunchArgument('static_image_path', default_value='/home/user/ROS/assets/maize/IMG_1822_14.JPG',description='The path to the static image for CameraNode'),
         DeclareLaunchArgument('loop', default_value='-1', description='0 = do not loop, >0 = # of loops, -1 = loop forever'),
         DeclareLaunchArgument('frame_rate', default_value='30', description='Frame rate for CameraNode publishing'),
+        DeclareLaunchArgument('precision', default_value='fp32', description='Precision for the inference data input'),
+        DeclareLaunchArgument('weights_path', default_value='/home/user/ROS/models/maize/Maize.onnx', description='Path to the model weights file (must be absolute!)'),
+        DeclareLaunchArgument('camera_side', default_value='left', description='Side of the Zed Camera for inference'),
+        DeclareLaunchArgument('use_display_node', default_value='False', description='Toggle for using the display'),
         
         # Picture Node
         Node(
@@ -47,14 +51,4 @@ def generate_launch_description():
             output='screen'
         ),
         
-        # Proxy Node
-        Node(
-            package='python_workspace',
-            executable='proxy_node',
-            name='proxy_node',
-            parameters=[
-                {'usb_port': LaunchConfiguration('usb_port')}
-            ],
-            output='screen'
-        )
     ])

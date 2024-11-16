@@ -16,8 +16,6 @@
 | `/inference_out` | custom msg that passes inference output and raw image to extermination node | `custom_interface/msg/InferenceOutput` |
 | `/output_img`               | Processed output image               | `sensor_msgs/Image`|
 
-
-
 ### Other commands
 #### Running the camera node:
 `ros2 run python_workspace camera_node --ros-args -p static_image_path:='/home/user/Desktop/ROS/Models/Maize Model/sample_maize_images' -p loop:=-1 -p frame_rate:=10 -p model_dimensions:=[640,640]`

@@ -7,7 +7,7 @@ from rclpy.executors import MultiThreadedExecutor
 from cv_bridge import CvBridge
 
 from sensor_msgs.msg import Image
-from std_msgs.msg import Header, Bool
+from std_msgs.msg import Header, Int32, String
 from custom_interfaces.msg import InferenceOutput
 
 from .scripts.utils import ModelInference
@@ -23,6 +23,7 @@ class ExterminationNode(Node):
         
         self.window = "Left Camera" if self.camera_side == "left" else "Right Camera" if self.use_display_node else None
         
+        self.publishing_rate = 1.0
         self.lower_range = [78, 158, 124]
         self.upper_range = [60, 255, 255]
         self.minimum_area = 100
@@ -30,10 +31,11 @@ class ExterminationNode(Node):
         self.boxes_present = 0
         self.model = ModelInference()
         self.bridge = CvBridge()
+        self.boxes_msg = 0
         
         self.inference_subscription = self.create_subscription(InferenceOutput, f'{self.camera_side}_inference_output', self.inference_callback, 10)
-        self.box_publisher = self.create_publisher(Bool, f'{self.camera_side}_extermination_output', 10)
-
+        self.box_publisher = self.create_publisher(Int32, f'{self.camera_side}_extermination_output', 10)
+        self.timer = self.create_timer(self.publishing_rate, self.timer_callback)
 
     def inference_callback(self, msg):
         preprocessed_image = self.bridge.imgmsg_to_cv2(msg.preprocessed_image, desired_encoding='passthrough') # what is this needed for?
@@ -46,13 +48,15 @@ class ExterminationNode(Node):
             cv2.waitKey(10)
 
         if len(bounding_boxes) > 0:
-            self.boxes_present = True
+            self.boxes_present = 1
         else:
-            self.boxes_present = False
+            self.boxes_present = 0
         
-        boxes_msg = Bool()
-        boxes_msg.data = self.boxes_present
-        self.box_publisher.publish(boxes_msg)
+        self.boxes_msg = Int32()
+        self.boxes_msg.data = self.boxes_present
+    
+    def timer_callback(self):
+        self.box_publisher.publish(self.boxes_msg)
         self.get_logger().info("Published results to Proxy Node")
         
 

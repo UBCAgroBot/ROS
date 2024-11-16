@@ -17,15 +17,12 @@ class InferenceNode(Node):
     def __init__(self):
         super().__init__('inference_node')
 
-        self.declare_parameter('weights_path', './src/python_workspace/python_workspace/scripts/best.onnx')
+        self.declare_parameter('weights_path', '/home/user/ROS/models/maize/Maize.onnx')
         self.declare_parameter('precision', 'fp32') # fp32, fp16 # todo: do something with strip_weights and precision
         self.declare_parameter('camera_side', 'left')
         self.camera_side = self.get_parameter('camera_side').get_parameter_value().string_value
         self.weights_path = self.get_parameter('weights_path').get_parameter_value().string_value
         self.precision = self.get_parameter('precision').get_parameter_value().string_value
-        
-        if not os.path.isabs(self.weights_path):
-            self.weights_path = os.path.join(os.getcwd(), self.weights_path)
         
         self.model = ModelInference(self.weights_path, self.precision)
         self.bridge = CvBridge()
