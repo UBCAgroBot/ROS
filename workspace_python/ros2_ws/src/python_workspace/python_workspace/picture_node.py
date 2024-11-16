@@ -5,8 +5,8 @@ import rclpy
 from rclpy.time import Time
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
-from sensor_msgs.msg import Image, Header, Int
-from std_msgs.msg import Header, String
+from sensor_msgs.msg import Image
+from std_msgs.msg import Header, String, Int8
 from cv_bridge import CvBridge
 import queue
 import numpy as np
@@ -20,7 +20,7 @@ class PictureNode(Node):
     def __init__(self):
         super().__init__('picture_node')
 
-        self.declare_parameter('static_image_path', '/home/usr/ROS/assets/maize/IMG_1822_14.JPG')
+        self.declare_parameter('static_image_path', '/home/user/ROS/assets/maize/IMG_1822_14.JPG')
         self.declare_parameter('loop', -1)  # 0 = don't loop, >0 = # of loops, -1 = loop forever
         self.declare_parameter('frame_rate', 1)  # Desired frame rate for publishing
         
@@ -114,9 +114,10 @@ class PictureNode(Node):
 
             # publish image and increment whatever is needed
             self.input_image_publisher.publish(image_input)
-
+            self.get_logger().info(f"Published image {self.image_counter}")
             self.image_counter += 1
             self.loop_count = self.image_counter // array_size
+            
         else:
             # stop the timer/quit the node
             self.timer.cancel()
@@ -138,6 +139,9 @@ def main(args=None):
     
     try:
         executor.spin()
+    except KeyboardInterrupt:
+        print("Shutting down picture node")
+        return
     finally:
         executor.shutdown()
         picture_node.destroy_node()

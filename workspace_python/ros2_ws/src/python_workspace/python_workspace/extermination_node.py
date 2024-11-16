@@ -7,7 +7,7 @@ from rclpy.executors import MultiThreadedExecutor
 from cv_bridge import CvBridge
 
 from sensor_msgs.msg import Image
-from std_msgs.msg import Header, Int32, String
+from std_msgs.msg import Header, Int8, String
 from custom_interfaces.msg import InferenceOutput
 
 from .scripts.utils import ModelInference
@@ -31,10 +31,11 @@ class ExterminationNode(Node):
         self.boxes_present = 0
         self.model = ModelInference()
         self.bridge = CvBridge()
-        self.boxes_msg = 0
+        self.boxes_msg = Int8()
+        self.boxes_msg.data = 0
         
         self.inference_subscription = self.create_subscription(InferenceOutput, f'{self.camera_side}_inference_output', self.inference_callback, 10)
-        self.box_publisher = self.create_publisher(Int32, f'{self.camera_side}_extermination_output', 10)
+        self.box_publisher = self.create_publisher(Int8, f'{self.camera_side}_extermination_output', 10)
         self.timer = self.create_timer(self.publishing_rate, self.timer_callback)
 
     def inference_callback(self, msg):
@@ -52,7 +53,7 @@ class ExterminationNode(Node):
         else:
             self.boxes_present = 0
         
-        self.boxes_msg = Int32()
+        self.boxes_msg = Int8()
         self.boxes_msg.data = self.boxes_present
     
     def timer_callback(self):

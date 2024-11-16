@@ -5,7 +5,7 @@ from rclpy.time import Time
 from rclpy.node import Node
 from std_msgs.msg import Bool
 from rclpy.executors import MultiThreadedExecutor
-from std_msgs.msg import Header, Integer
+from std_msgs.msg import String,Header, Int8
 
 class ProxyNode(Node):
     def __init__(self):
@@ -19,8 +19,8 @@ class ProxyNode(Node):
         except Exception as e:
             self.get_logger().error(f"Failed to connect to serial port: {e}")
         
-        self.left_subscription = self.create_subscription(Integer, 'left_extermination_output', self.left_callback, 10)
-        self.right_subscription = self.create_subscription(Integer, 'right_extermination_output', self.right_callback, 10)
+        self.left_subscription = self.create_subscription(Int8, 'left_extermination_output', self.left_callback, 10)
+        self.right_subscription = self.create_subscription(Int8, 'right_extermination_output', self.right_callback, 10)
     
     def left_callback(self, msg):
         result = str(msg.data)
