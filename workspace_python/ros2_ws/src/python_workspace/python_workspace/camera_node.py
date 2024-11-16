@@ -19,6 +19,8 @@ class CameraNode(Node):
     def __init__(self):
         super().__init__('camera_node')
 
+        self.get_logger().info("Initializing Camera Node")
+        
         self.declare_parameter('camera_side', 'left')
         self.declare_parameter('roi_dimensions', (0, 0, 100, 100))  
         self.declare_parameter('source_type', 'zed')
@@ -32,7 +34,7 @@ class CameraNode(Node):
         # image = ImageSource(self.source_type, path)
 
         self.shift_constant = 0
-        self.frame_rate = 30
+        self.frame_rate = 1
         self.model_dimensions = (640, 640)
         self.velocity = 0.0
         self.bridge = CvBridge()
@@ -56,7 +58,7 @@ class CameraNode(Node):
             self.shift_constant *= -1
         
         if not zed.is_opened():
-            print("Opening ZED Camera ")
+            self.get_logger().info("Initializing Zed Camera")
         status = zed.open(init)
         if status != sl.ERROR_CODE.SUCCESS:
             self.get_logger().error(f"Failed to open ZED camera: {str(status)}")
@@ -82,7 +84,7 @@ class CameraNode(Node):
                 self.get_logger().error("Failed to grab ZED camera frame: {str(err)}")
 
         zed.close()
-        print("ZED Camera closed")
+        self.get_logger().info("Closing Zed Camera")
     
     def preprocess_image(self, image):
         tic = time.perf_counter_ns()
@@ -106,6 +108,7 @@ class CameraNode(Node):
         self.input_image_publisher.publish(image_input)
         toc = time.perf_counter_ns()
         self.get_logger().info(f"Preprocessing: {(toc-tic)/1e6} ms")
+        time.sleep(1/self.frame_rate)
 
 def main(args=None):
     rclpy.init(args=args)

@@ -1,16 +1,21 @@
 import cv2
 import os
 import numpy as np
+import logging
 
-class ImageSource:
+
+class ImageSource():
     default_folder_path = ""
     default_image_path = ""
     default_video_path = ""
+    logging.basicConfig(format='%(message)s', level=logging.INFO)
     
-    # should replace with the dynamic path thing
-    def __init__(self, source_type="picture", source_path="/usr/ROS/assets/maize"):
+    def __init__(self, source_type="picture", source_path="/usr/ROS/assets/maize", camera_side="left", serial_number=26853647):
         if self.source_type == "zed":
-            pass
+            import pyzed as sl
+            self.camera_side = 0
+            self.serial_number = 0
+            pass 
         elif self.source_type == "static_image":
             pass # verify path exists and it is an image
         elif self.source_type == "image_folder":
@@ -18,20 +23,66 @@ class ImageSource:
         elif self.source_type == "video":
             pass # verify path exists and it is a video
         else:
-            print(f"{self.source_type} is not a valid image source, options are: zed, static_image, image_folder, video")
+            logging.info(f"{self.source_type} is not a valid image source, options are: zed, static_image, image_folder, video")
             raise ValueError(f"{self.source_type} is not a valid image source, options are: zed, static_image, image_folder, video")
         
     # validate paths, etc.
-    def validate_paths():
-        pass
-    
-    def initialize_camera():
-        pass
+    def validate_paths(self):
+        if not os.path.exists(self.image_path):
+            raise ValueError(f"Images folder not found at {self.image_path}")
+            
+        if len(os.listdir(self.image_path)) == 0:
+            raise ValueError(f"Images folder is empty")
         
-    # should parse directories or intialize the camera
+        files = []
+        os.chdir(self.image_path)
+        for filename in os.listdir(self.image_path):
+            if filename.endswith(".jpg") or filename.endswith(".JPG") or filename.endswith(".png"):
+                files.append(self.image_path + '/' + filename)
+        
+        if len(files) == 0:
+            raise ValueError(f"No images files found in {self.image_path}")
+        
+        logging.info(f"{len(files)} from {self.image_path} loaded successfully")
+        return files
+    
+    def initialize_camera(self, sl):
+        import pyzed as sl
+        self.zed = sl.Camera()
+        init = sl.InitParameters()
+        init.camera_resolution = sl.RESOLUTION.HD1080
+        init.camera_fps = 30
+        
+        init.set_from_serial_number(self.serial_number)
+    
+        if not self.zed.is_opened():
+            logging.info("Initializing Zed Camera")
+        status = self.zed.open(init)
+        if status != sl.ERROR_CODE.SUCCESS:
+            logging.error(f"Failed to open ZED camera: {str(status)}")
+            return
+        
+    # should parse directories
     def retrieve_images():
         pass
     
+    def capture_frames(self):
+        import pyzed as sl
+        runtime = sl.RuntimeParameters()
+        image_zed = sl.Mat()
+        
+        err = self.zed.grab(runtime)
+        if err == sl.ERROR_CODE.SUCCESS:
+            if self.camera_side == 'left':
+                self.zed.retrieve_image(image_zed, sl.VIEW.LEFT_UNRECTIFIED)
+            else:
+                self.zed.retrieve_image(image_zed, sl.VIEW.RIGHT_UNRECTIFIED)
+            cv_image = image_zed.get_data()  
+            yield(cv_image)
+        else:
+            logging.error("Failed to grab ZED camera frame: {str(err)}")
+    
     # should be a generator that gets images
-    def parse_images():
-        pass
+    def parse_images(self):
+        for image in self.images:
+            pass

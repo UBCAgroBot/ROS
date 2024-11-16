@@ -16,6 +16,8 @@ from .scripts.utils import ModelInference
 class InferenceNode(Node):
     def __init__(self):
         super().__init__('inference_node')
+        
+        self.get_logger().info("Initializing Inference Node")
 
         self.declare_parameter('weights_path', '/home/user/ROS/models/maize/Maize.onnx')
         self.declare_parameter('precision', 'fp32') # fp32, fp16 # todo: do something with strip_weights and precision
@@ -31,6 +33,7 @@ class InferenceNode(Node):
         self.box_publisher = self.create_publisher(InferenceOutput,f'{self.camera_side}_inference_output', 10)
     
     def image_callback(self, msg):
+        self.get_logger().info("Received Image")
         opencv_img = self.bridge.imgmsg_to_cv2(msg.preprocessed_image, desired_encoding='passthrough')
         tic = time.perf_counter_ns()
         output_img, confidences, boxes = self.model.inference(opencv_img)

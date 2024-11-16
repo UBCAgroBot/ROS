@@ -16,6 +16,8 @@ class ExterminationNode(Node):
     def __init__(self):
         super().__init__('extermination_node')
         
+        self.get_logger().info("Initializing Extermination Node")
+        
         self.declare_parameter('use_display_node', True)
         self.declare_parameter('camera_side', 'left')
         self.use_display_node = self.get_parameter('use_display_node').get_parameter_value().bool_value
@@ -39,6 +41,8 @@ class ExterminationNode(Node):
         self.timer = self.create_timer(self.publishing_rate, self.timer_callback)
 
     def inference_callback(self, msg):
+        self.get_logger().info("Received Bounding Boxes")
+        
         preprocessed_image = self.bridge.imgmsg_to_cv2(msg.preprocessed_image, desired_encoding='passthrough') # what is this needed for?
         raw_image = self.bridge.imgmsg_to_cv2(msg.raw_image, desired_encoding='passthrough')
         bounding_boxes = self.model.postprocess(msg.confidences.data,msg.bounding_boxes.data, raw_image,msg.velocity)
