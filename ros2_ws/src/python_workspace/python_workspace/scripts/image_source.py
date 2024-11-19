@@ -15,18 +15,42 @@ class ImageSource():
             import pyzed as sl
             self.camera_side = 0
             self.serial_number = 0
-            pass 
+            self.initialize_camera()
+            
         elif self.source_type == "static_image":
-            pass # verify path exists and it is an image
+            if not os.path.exists(self.source_path):
+                raise ValueError(f"Image file not found at {self.source_path}")
+            
+            if not (self.source_path.endswith(".jpg") or self.source_path.endswith(".JPG") or self.source_path.endswith(".png") or self.source_path.endswith(".PNG")):
+                raise ValueError(f"Image file at {self.source_path} is not a valid image file. Supported formats are .JPG and .PNG")
+            
         elif self.source_type == "image_folder":
-            pass # verify path exists, it is a folder and it is not empty
+            if not os.path.exists(self.source_path):
+                raise ValueError(f"Folder not found at {self.source_path}")
+            
+            if not os.path.isdir(self.source_path):
+                raise ValueError(f"Path at {self.source_path} is not a folder")
+            
+            if len(os.listdir(self.source_path)) == 0:
+                raise ValueError(f"Folder at {self.source_path} is empty")
+            
+            valid_images = [".jpg", ".JPG", ".png", ".PNG"]
+            image_files = [f for f in os.listdir(self.source_path) if any(f.endswith(ext) for ext in valid_images)]
+            
+            if len(image_files) == 0:
+                raise ValueError(f"No image files found in {self.source_path}. Supported formats are .JPG and .PNG")
+        
         elif self.source_type == "video":
-            pass # verify path exists and it is a video
+            if not os.path.exists(self.source_path):
+                raise ValueError(f"Video file not found at {self.source_path}")
+            
+            if not self.source_path.endswith(".mp4"):
+                raise ValueError(f"Video file at {self.source_path} is not a valid video file. Supported format is .mp4")
+        
         else:
             logging.info(f"{self.source_type} is not a valid image source, options are: zed, static_image, image_folder, video")
             raise ValueError(f"{self.source_type} is not a valid image source, options are: zed, static_image, image_folder, video")
         
-    # validate paths, etc.
     def validate_paths(self):
         if not os.path.exists(self.image_path):
             raise ValueError(f"Images folder not found at {self.image_path}")
@@ -46,7 +70,7 @@ class ImageSource():
         logging.info(f"{len(files)} from {self.image_path} loaded successfully")
         return files
     
-    def initialize_camera(self, sl):
+    def initialize_camera(self):
         import pyzed as sl
         self.zed = sl.Camera()
         init = sl.InitParameters()
