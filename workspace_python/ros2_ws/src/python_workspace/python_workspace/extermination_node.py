@@ -5,6 +5,7 @@ import cv2
 # depth point cloud here...
 # add object counter
 from cv_bridge import CvBridge
+import numpy as np
 
 import rclpy
 from rclpy.time import Time
@@ -58,8 +59,10 @@ class ExterminationNode(Node):
         preprocessed_image = self.bridge.imgmsg_to_cv2(msg.preprocessed_image, desired_encoding='passthrough')
         raw_image = self.bridge.imgmsg_to_cv2(msg.raw_image, desired_encoding='passthrough')
 
+        confidence = np.reshape(msg.confidences.data, (-1))
+        bboxes = np.reshape(msg.bounding_boxes.data, (-1,4))
 
-        bounding_boxes = postprocess(msg.confidences.data,msg.bounding_boxes.data, raw_image,msg.velocity)
+        bounding_boxes = postprocess(confidence,bboxes, raw_image,msg.velocity)
         
         final_image = draw_boxes(raw_image,bounding_boxes,velocity=msg.velocity)
 

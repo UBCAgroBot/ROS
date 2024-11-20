@@ -97,7 +97,7 @@ def _convert_bboxes_to_pixel(bbox_array: np.ndarray, image_shape: Tuple[int, int
     Converts normalized bounding boxes to pixel coordinates
 
     Args:
-        bbox_array (np.ndarray): Array of bounding boxes in normalized coordinates
+        bbox_array (np.ndarray): 2D Array of bounding boxes in normalized coordinates
         image_shape (Tuple[int, int]): The shape of the image
 
     Returns:
@@ -229,7 +229,7 @@ def draw_boxes(image: np.ndarray, bboxes: list, with_roi =True, with_roi_shift =
     for bbox in bboxes:
         x1, y1, x2, y2 = map(int, bbox)
 
-        print(f"Bounding box: ({x1}, {y1}), ({x2}, {y2})")
+        # print(f"Bounding box: ({x1}, {y1}), ({x2}, {y2})")
         image = cv2.rectangle(image, (x1, y1), (x2, y2),(255, 0, 0), 2)
 
     return image

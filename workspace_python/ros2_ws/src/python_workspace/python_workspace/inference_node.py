@@ -53,8 +53,10 @@ class InferenceNode(Node):
         bounding_boxes.data = []
         confidences_msg.data = []
         if len(boxes) != 0:
-            bounding_boxes.data = boxes
-            confidences_msg.data = confidences
+            print(boxes.reshape(-1).tolist())
+            print(type(boxes.reshape(-1).tolist()))
+            bounding_boxes.data = boxes.reshape(-1).tolist()
+            confidences_msg.data = confidences.reshape(-1).tolist()
             output_msg.bounding_boxes = bounding_boxes
             output_msg.confidences = confidences_msg
         self.box_publisher.publish(output_msg)
