@@ -71,13 +71,13 @@ def run_inference(model, image_array: np.ndarray) -> Results:
     
     return image_array, np.array([]), np.array([])
 
-def postprocess(confidence, bbox_array,raw_image: np.ndarray, velocity=0):
+def postprocess(confidence, bbox_array: np.ndarray,raw_image: np.ndarray, velocity=0):
     """
     Postprocesses the bounding boxes to convert them from normalized coordinates (xyxyn) to pixel coordinates (xyxy).
     Applies color segmentation to refine the bounding boxes and adjusts them to fit within a shifted region of interest (ROI).
 
     Args:
-        confidence (list): List of confidence scores for each bounding box.
+        confidence (list): List of confidence scores for each bounding box. 2D array of shape (N, 4). (N = no. of boxes)
         bbox_array (list): List of bounding boxes in normalized coordinates (xyxyn).
         raw_image (np.ndarray): The original input image.
         velocity (int, optional): The velocity to shift the ROI. Default is 0.
