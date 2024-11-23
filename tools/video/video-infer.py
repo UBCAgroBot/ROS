@@ -40,10 +40,11 @@ if __name__ == "__main__":
     extract_frames_from_mp4(video_path, output_dir, frame_rate=1)
 
 # inference
-
 import cv2
 from ultralytics import YOLO
 from tqdm import tqdm
+
+# or use ultralytics video inference here?
 
 def yolo_inference_on_video(input_video_path, output_video_path, model_name='yolov8n'):
     # Load YOLO model

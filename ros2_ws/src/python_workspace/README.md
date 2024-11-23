@@ -102,3 +102,9 @@ source: https://ros2jsguy.medium.com/4-data-visualization-using-ros-2-rviz2-pub-
 
 ### looking at the rviz2 display
 `ros2 launch zed_display_rviz2 display_zed_cam.launch.py camera_model:=zed2`
+
+# Running:
+```bash
+source install/setup.bash
+ros2 run python_workspace picture_node --ros-args -p static_image_path:=$IMAGE_FOLDER_PATH -p frame_rate:=1
+```
