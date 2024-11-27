@@ -5,6 +5,7 @@ import cv2
 # depth point cloud here...
 # add object counter
 from cv_bridge import CvBridge
+import numpy as np
 
 import rclpy
 from rclpy.time import Time
@@ -13,7 +14,7 @@ from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 from sensor_msgs.msg import Image
 from custom_interfaces.msg import InferenceOutput                            # CHANGE
-from .scripts.utils import ModelInference
+from .scripts.utils import postprocess, draw_boxes
 
 # cuda.init()
 # device = cuda.Device(0)
@@ -49,8 +50,6 @@ class ExterminationNode(Node):
         #         self.window = "Right Camera"
 
         self.window = "Left Camera"
-
-        self.model = ModelInference()
         self.bridge = CvBridge()
         
         self.subscription = self.create_subscription(InferenceOutput, 'inference_out', self.inference_callback, 10)
@@ -60,10 +59,12 @@ class ExterminationNode(Node):
         preprocessed_image = self.bridge.imgmsg_to_cv2(msg.preprocessed_image, desired_encoding='passthrough')
         raw_image = self.bridge.imgmsg_to_cv2(msg.raw_image, desired_encoding='passthrough')
 
+        confidence = np.reshape(msg.confidences.data, (-1))
+        bboxes = np.reshape(msg.bounding_boxes.data, (-1,4))
 
-        bounding_boxes = self.model.postprocess(msg.confidences.data,msg.bounding_boxes.data, raw_image,msg.velocity)
+        bounding_boxes = postprocess(confidence,bboxes, raw_image,msg.velocity)
         
-        final_image = self.model.draw_boxes(raw_image,bounding_boxes,velocity=msg.velocity)
+        final_image = draw_boxes(raw_image,bounding_boxes,velocity=msg.velocity)
 
         if self.use_display_node:
         # Create a CUDA window and display the cv_image
