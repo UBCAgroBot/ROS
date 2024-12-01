@@ -15,7 +15,7 @@ def generate_launch_description():
         DeclareLaunchArgument('usb_port', default_value='/dev/ttyACM0', description='USB port for the serial connection'),
 
         # Inference Node arguments
-        DeclareLaunchArgument('weights_path', default_value='./src/python_workspace/python_workspace/scripts/best.onnx', description='Path to the weights file'),
+        DeclareLaunchArgument('weights_path', default_value='/home/user/ROS/models/maize/Maize.onnx', description='Path to the weights file'),
         DeclareLaunchArgument('precision', default_value='fp32', description='Precision for the inference model (e.g., fp32, fp16)'),
         
         # Extermination Node arguments
