@@ -43,13 +43,12 @@ def main():
         cls=cls,
         bboxes=bboxes,
         confs=confs,
-        fname="/home/user/Downloads/output.jpg",
+        fname="output.jpg",
         names=names,
-        save=True
     )
 
     # Display the result using OpenCV
-    output_image = cv2.imread("/home/user/Downloads/output.jpg")
+    output_image = cv2.imread("output.jpg")
     if output_image is not None:
         cv2.imshow("Image with Bounding Boxes", output_image)
         cv2.waitKey(0)
