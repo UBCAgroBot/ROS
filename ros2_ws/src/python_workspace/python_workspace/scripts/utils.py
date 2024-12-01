@@ -142,8 +142,6 @@ class ModelInference:
                             of the top-left and bottom-right corners.
         """
         
-        return bboxes
-        
         detections = []
         for bbox in bboxes:
             x1, y1, x2, y2 = map(int, bbox)
@@ -197,8 +195,6 @@ class ModelInference:
             Returns:
             list of list of int: A list of adjusted bounding boxes that are within the shifted ROI.
             """
-            
-            return bboxes
             
             velocity = int(velocity)
             roi_x1,roi_y1,roi_x2,roi_y2 = self.get_roi_coordinates(image=raw_image)
