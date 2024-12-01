@@ -196,6 +196,8 @@ class ModelInference:
             list of list of int: A list of adjusted bounding boxes that are within the shifted ROI.
             """
             
+            return bboxes
+            
             velocity = int(velocity)
             roi_x1,roi_y1,roi_x2,roi_y2 = self.get_roi_coordinates(image=raw_image)
             shifted_roi_x1 = roi_x1 - velocity
