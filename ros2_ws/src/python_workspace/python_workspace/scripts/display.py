@@ -37,7 +37,7 @@ def main():
     names = {0: "Class A", 1: "Class B"}  # Class names
 
     # Plot the images with bounding boxes
-    plotting.plot_images(
+    output_image = plotting.plot_images(
         images=images,
         batch_idx=batch_idx,
         cls=cls,
@@ -45,10 +45,11 @@ def main():
         confs=confs,
         fname="output.jpg",
         names=names,
+        save=False
     )
 
     # Display the result using OpenCV
-    output_image = cv2.imread("output.jpg")
+    # output_image = cv2.imread("output.jpg")
     if output_image is not None:
         cv2.imshow("Image with Bounding Boxes", output_image)
         cv2.waitKey(0)
