@@ -1,1 +1,0 @@
-ros2 launch launch.py use_display_node:=True

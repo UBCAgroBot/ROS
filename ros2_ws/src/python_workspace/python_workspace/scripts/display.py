@@ -43,7 +43,7 @@ def main():
         cls=cls,
         bboxes=bboxes,
         confs=confs,
-        fname="output.jpg",
+        fname="/home/user/Downloads/output.jpg",
         names=names,
         save=False
     )
