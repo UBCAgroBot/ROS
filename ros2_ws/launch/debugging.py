@@ -11,7 +11,7 @@ def generate_launch_description():
         DeclareLaunchArgument('precision', default_value='fp32', description='Precision for the inference data input'),
         DeclareLaunchArgument('weights_path', default_value='/home/user/ROS/models/maize/Maize.onnx', description='Path to the model weights file (must be absolute!)'),
         DeclareLaunchArgument('camera_side', default_value='left', description='Side of the Zed Camera for inference'),
-        DeclareLaunchArgument('use_display_node', default_value='False', description='Toggle for using the display'),
+        DeclareLaunchArgument('use_display_node', default_value='True', description='Toggle for using the display'),
         
         # Picture Node
         Node(
