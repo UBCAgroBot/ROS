@@ -39,11 +39,10 @@ class PictureNode(Node):
         self.loop_count = 0
         self.image_counter = 0
 
-        self.input_image_publisher = self.create_publisher(ImageInput, 'input_image', 10)
+        self.input_image_publisher = self.create_publisher(ImageInput, 'left_image_input', 10)
         timer_period = 1/self.frame_rate  # publish every 0.5 seconds
         self.timer = self.create_timer(timer_period * 2, self.publish_static_image)
 
-           
     def get_images(self)-> list[np.ndarray]:
         """
         Returns a list of images in the form of cv images 
