@@ -45,7 +45,7 @@ def main():
         confs=confs,
         fname="/home/user/Downloads/output.jpg",
         names=names,
-        save=False
+        save=True
     )
 
     # Display the result using OpenCV
