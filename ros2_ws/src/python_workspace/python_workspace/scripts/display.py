@@ -49,7 +49,7 @@ def main():
     )
 
     # Display the result using OpenCV
-    output_image = cv2.imread("output.jpg")
+    output_image = cv2.imread("/home/user/Downloads/output.jpg")
     if output_image is not None:
         cv2.imshow("Image with Bounding Boxes", output_image)
         cv2.waitKey(0)
