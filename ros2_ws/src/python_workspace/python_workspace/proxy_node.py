@@ -26,22 +26,22 @@ class ProxyNode(Node):
         result = str(msg.data)
         if result == "0":
             serialized_msg = str(0) + '\n'
-            self.ser.wrie(serialized_msg.encode())
+            self.ser.write(serialized_msg.encode())
             self.get_logger().info(f'Sent to Arduino: 0 (left off)')
         else:
             serialized_msg = str(1) + '\n'
-            self.ser.wrie(serialized_msg.encode())
+            self.ser.write(serialized_msg.encode())
             self.get_logger().info(f'Sent to Arduino: 1 (left on)')
     
     def right_callback(self, msg):
         result = str(msg.data)
         if result == "0":
             serialized_msg = str(2) + '\n'
-            self.ser.wrie(serialized_msg.encode())
+            self.ser.write(serialized_msg.encode())
             self.get_logger().info(f'Sent to Arduino: 2 (right off)')
         else:
             serialized_msg = str(3) + '\n'
-            self.ser.wrie(serialized_msg.encode())
+            self.ser.write(serialized_msg.encode())
             self.get_logger().info(f'Sent to Arduino: 3 (right on)')
     
 def main(args=None):
