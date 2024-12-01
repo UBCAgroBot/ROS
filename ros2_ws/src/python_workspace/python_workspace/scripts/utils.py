@@ -142,6 +142,8 @@ class ModelInference:
                             of the top-left and bottom-right corners.
         """
         
+        return bboxes
+        
         detections = []
         for bbox in bboxes:
             x1, y1, x2, y2 = map(int, bbox)
