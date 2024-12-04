@@ -17,7 +17,7 @@ find_package(sensor_msgs REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ImageInput.msg"
   "msg/InferenceOutput.msg"
-  "srv/GetOriginalImage.srv"
+  "srv/GetRowPlantCount.srv"
   DEPENDENCIES sensor_msgs
 
  )
