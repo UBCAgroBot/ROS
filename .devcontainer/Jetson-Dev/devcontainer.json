@@ -20,4 +20,4 @@
         "--ulimit=stack=67108864"
     ],
     "postStartCommand": "bash -c 'echo source /opt/ros/humble/setup.bash >> ~/.bashrc && source /opt/ros/humble/setup.bash'"
-}
+} 

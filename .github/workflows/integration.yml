@@ -1,0 +1,37 @@
+name: Integration Pipeline
+run-name: Integration pipeline triggered by ${{ github.actor }}
+
+on:
+  workflow_call:
+    inputs:
+      delivery:
+        required: false
+        type: boolean
+        default: true
+      deployment:
+        required: false
+        type: boolean
+        default: true
+
+  workflow_dispatch:
+    inputs:
+      delivery:
+        description: 'Would you like to update the official image?'
+        required: false
+        default: true
+        type: boolean
+      deployment:
+        description: 'Would you like to run unit and benchmarking tests?'
+        required: false
+        default: true
+        type: boolean
+  
+jobs:
+  build:
+    # build here
+  test:
+    # test here
+    # needs [build]
+  
+# should just build the ros package on the container and maybe peform unit tests
+# copy of the merge pipeline?

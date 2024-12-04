@@ -1,0 +1,39 @@
+{
+    "name": "Jetson Runtime Container",
+    "remoteUser": "root",
+    "image": "agrobotappliedai/jetsoncontainers-runtime:v1",
+    "customizations":{
+        "settings": {
+            "terminal.integrated.shell.linux": "bash"
+        }
+    },
+    "workspaceFolder": "/home/user/workspace",
+    "workspaceMount": "source=.,target=/home/user/workspace,type=bind,consistency=cached",
+    "mounts": [],
+    "runArgs": [
+        "--net=host",
+        "-it",
+        "--gpus=all",
+        "-e NVIDIA_DRIVER_CAPABILITIES=all",
+        "--ipc=host",
+        "--ulimit=memlock=-1",
+        "--ulimit=stack=67108864"
+    ],
+    "postStartCommand": "bash -c 'source /opt/ros/humble/setup.bash'"
+}
+
+// {
+//     "containerEnv": {
+//         "DISPLAY": "unix:0",
+//         "ROS_LOCALHOST_ONLY": "1",
+//         "ROS_DOMAIN_ID": "42"
+//     },
+//     "runArgs": [
+//         "-e", "DISPLAY=${env:DISPLAY}"
+//     ],
+//     "mounts": [
+//        "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind,consistency=cached",
+//        "source=/dev/dri,target=/dev/dri,type=bind,consistency=cached"
+//     ],
+//     "postCreateCommand": "sudo rosdep update && sudo rosdep install --from-paths src --ignore-src -y && sudo chown -R $(whoami) /home/ws/"
+// }
