@@ -24,6 +24,7 @@ class ExterminationNode(Node):
         self.camera_side = self.get_parameter('camera_side').get_parameter_value().string_value
         
         self.window = "Left Camera" if self.camera_side == "left" else "Right Camera" if self.use_display_node else None
+        print(self.window)
         
         self.publishing_rate = 1.0
         self.lower_range = [78, 158, 124]
