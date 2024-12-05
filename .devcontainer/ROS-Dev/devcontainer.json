@@ -1,0 +1,20 @@
+{
+    "name": "ROS2 Dev Container",
+    "remoteUser": "vscode",
+    "image": "agrobotappliedai/ros-containers:latest",
+    "customizations":{
+        "settings": {
+            "terminal.integrated.shell.linux": "bash"
+        }
+    },
+    "workspaceFolder": "/home/vscode/workspace",
+    "workspaceMount": "source=.,target=/home/vscode/workspace,type=bind,consistency=cached",
+    "mounts": [],
+    "runArgs": [
+        "--net=host",
+        "-it",
+        "--rm",
+        "--privileged"
+    ],
+    "postStartCommand": "bash -c 'source /opt/ros/humble/setup.bash'"
+}

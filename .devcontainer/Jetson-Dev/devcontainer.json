@@ -1,14 +1,14 @@
 {
     "name": "Jetson Development Container",
-    "remoteUser": "vscode",
+    "remoteUser": "root",
     "image": "agrobotappliedai/jetsoncontainers-dev:latest",
     "customizations":{
         "settings": {
             "terminal.integrated.shell.linux": "bash"
         }
     },
-    "workspaceFolder": "/home/vscode/workspace",
-    "workspaceMount": "source=.,target=/home/vscode/workspace,type=bind,consistency=cached",
+    "workspaceFolder": "/home/user/workspace",
+    "workspaceMount": "source=.,target=/home/user/workspace,type=bind,consistency=cached",
     "mounts": [],
     "runArgs": [
         "--net=host",
@@ -17,7 +17,8 @@
         "-e NVIDIA_DRIVER_CAPABILITIES=all",
         "--ipc=host",
         "--ulimit=memlock=-1",
-        "--ulimit=stack=67108864"
+        "--ulimit=stack=67108864",
+        "--privileged"
     ],
-    "postStartCommand": "bash -c 'echo source /opt/ros/humble/setup.bash >> ~/.bashrc && source /opt/ros/humble/setup.bash'"
+    "postStartCommand": "bash -c 'sudo apt update && sudo apt upgrade -y'"
 }

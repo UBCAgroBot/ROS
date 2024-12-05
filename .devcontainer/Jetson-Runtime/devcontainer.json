@@ -1,7 +1,7 @@
 {
     "name": "Jetson Runtime Container",
     "remoteUser": "root",
-    "image": "agrobotappliedai/jetsoncontainers-runtime:v1",
+    "image": "agrobotappliedai/jetsoncontainers-runtime:latest",
     "customizations":{
         "settings": {
             "terminal.integrated.shell.linux": "bash"
@@ -16,24 +16,20 @@
         "--gpus=all",
         "-e NVIDIA_DRIVER_CAPABILITIES=all",
         "--ipc=host",
+        "--pid=host",
         "--ulimit=memlock=-1",
-        "--ulimit=stack=67108864"
+        "--ulimit=stack=67108864",
+        "--privileged"
+        // "-e DISPLAY=${env:DISPLAY}",
+        // "-v /usr/local/zed/settings:/usr/local/zed/settings"
+        // https://support.stereolabs.com/hc/en-us/articles/21614848880791-How-can-I-use-the-ZED-with-Docker-on-a-robot-with-no-internet-connection
+        // "-v /tmp:/tmp",
+        // "-v /dev:/dev",
+        // "-v /tmp/.X11-unix:/tmp/.X11-unix",
     ],
-    "postStartCommand": "bash -c 'source /opt/ros/humble/setup.bash'"
+    "postStartCommand": "bash -c 'sudo apt update && sudo apt upgrade -y'"
 }
 
-// {
-//     "containerEnv": {
-//         "DISPLAY": "unix:0",
-//         "ROS_LOCALHOST_ONLY": "1",
-//         "ROS_DOMAIN_ID": "42"
-//     },
-//     "runArgs": [
-//         "-e", "DISPLAY=${env:DISPLAY}"
-//     ],
-//     "mounts": [
-//        "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind,consistency=cached",
-//        "source=/dev/dri,target=/dev/dri,type=bind,consistency=cached"
-//     ],
-//     "postCreateCommand": "sudo rosdep update && sudo rosdep install --from-paths src --ignore-src -y && sudo chown -R $(whoami) /home/ws/"
-// }
+// xhost +si:localuser:root (before running)
+// ssh -X -p 2222 root@localhost (after running)
+// ask chatgpt how to enable display forwarding for diff users same server

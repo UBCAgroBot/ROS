@@ -1,0 +1,33 @@
+{
+    "name": "ZED Dev Container",
+    "remoteUser": "root",
+    "image": "agrobotappliedai/zed-containers:latest",
+    "customizations":{
+        "settings": {
+            "terminal.integrated.shell.linux": "bash"
+        }
+    },
+    "workspaceFolder": "/home/user/workspace",
+    "workspaceMount": "source=.,target=/home/user/workspace,type=bind,consistency=cached",
+    "mounts": [],
+    //        "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind,consistency=cached",
+    //        "source=/dev/dri,target=/dev/dri,type=bind,consistency=cached"
+    // "remoteEnv": {
+    //     "DISPLAY": "unix:0",
+    //     "ROS_LOCALHOST_ONLY": "1",
+    //     "ROS_DOMAIN_ID": "42"
+    // },
+    "runArgs": [
+        "--net=host",
+        "-it",
+        "--rm",
+        "--privileged",
+        "--gpus=all",
+        "--env=NVIDIA_DRIVER_CAPABILITIES=video,compute,utility"
+        // "--env=DISPLAY",
+        // "--pid-host",
+        // "--ipc-host",
+        // "-e", "DISPLAY=${env:DISPLAY}"
+    ],
+    "postStartCommand": "bash -c 'source /opt/ros/humble/setup.bash'"
+}
