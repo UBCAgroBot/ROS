@@ -1,3 +1,4 @@
+# runs on any merge, verifies ros2 package can be built, tests run
 name: Integration Pipeline
 run-name: Integration pipeline triggered by ${{ github.actor }}
 
@@ -12,6 +13,7 @@ on:
         required: false
         type: boolean
         default: true
+  # pull_request:
 
   workflow_dispatch:
     inputs:
@@ -27,11 +29,49 @@ on:
         type: boolean
   
 jobs:
+  inputs:
+    - name: Print inputs
+      run: | 
+        echo ${{ github.event.inputs.delivery }}
+        echo ${{ inputs.delivery }}
+        echo ${{ github.event.inputs.deployment }}
+        echo ${{ inputs.deployment }}
+
   build:
-    # build here
+    - name: Compile
+      run: |
+        source /opt/ros/humble/setup.bash
+        cd /ros2_ws
+        rosdep install --from-paths src -y --ignore-src
+        colcon build --event-handlers console_cohesion+ --symlink-install
+
   test:
-    # test here
-    # needs [build]
-  
-# should just build the ros package on the container and maybe peform unit tests
-# copy of the merge pipeline?
+    - name: Run tests
+      needs: build
+      run: |
+        source /opt/ros/humble/setup.bash
+        cd /ros2_ws
+        source install/setup.bash
+        colcon test --event-handlers console_cohesion+
+        colcon test-result --verbose
+    # should pipe into markdown and display report...
+    
+  # These are only triggered through workflow dispatch
+  delivery:
+    if: ${{ github.event.inputs.delivery }}
+    steps:
+      - run: echo "this was detected successfully as a boolean (delivery)"
+    # uses: ./.github/workflows/delivery.yml
+    # with:
+    #   branch: {{ github.head_ref }}
+    #   deployment: {{ github.events.inputs.deployment }}
+
+  deployment:
+    if: ${{ inputs.deployment }}
+    steps:
+      - run: echo "this was detected successfully as boolean (deployment)"
+    # needs: delivery
+    # uses: ./.github/workflows/deployment.yml
+    # with: 
+    #   container_branch: {{ github.head_ref }}
+    #   container_version: {{ needs.delivery.outputs.version }}

@@ -1,0 +1,88 @@
+## save annotated images and upload as an artifact from pipeline
+## include detection confidence scores, inference time, test results summary
+# print result report, option to save and upload artifact
+name: Model Deployment Pipeline
+run-name: Model deployment pipeline triggered by ${{ github.actor }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      google_drive_link:
+        description: "Shareable Google Drive link for the model file"
+        required: true
+      model_file_name:
+        description: "Name to save the downloaded model file as"
+        required: true
+        default: "model.pt"
+      dataset_choice:
+        description: "Select the dataset to use"
+        required: true
+        type: choice
+        options:
+          - weed testing dataset
+          - maize testing dataset
+          - neither
+      custom_dataset_path:
+        description: "Custom folder/file path (if 'neither' is chosen)"
+        required: false
+        default: ""
+
+    workflow_call:
+      inputs: 
+        file_path:
+          required: true
+          type: string
+        dataset_path:
+          required: true
+          type: string
+
+# container needs gdown module
+jobs:
+  model-inference:
+    runs-on: self-hosted
+
+    steps:
+    - name: Download model file from Google Drive
+      run: |
+        # Extract the file ID from the Google Drive shareable link
+        file_id=$(echo "${{ github.event.inputs.google_drive_link }}" | sed -n 's|.*drive.google.com.*/d/\([a-zA-Z0-9_-]*\).*|\1|p')
+        
+        # If file ID could not be extracted, fail the job
+        if [ -z "$file_id" ]; then
+          echo "Failed to extract file ID from the Google Drive link. Please ensure the link is in the correct format."
+          exit 1
+        fi
+
+        # Download the file using gdown
+        gdown --id "$file_id" -O "${{ github.event.inputs.model_file_name }}"
+
+    - name: Handle dataset selection
+      run: |
+        if [ "${{ github.event.inputs.dataset_choice }}" == "weed testing dataset" ]; then
+          echo "Using weed testing dataset..."
+          dataset_path="path/to/weed/testing/dataset"
+        elif [ "${{ github.event.inputs.dataset_choice }}" == "maize testing dataset" ]; then
+          echo "Using maize testing dataset..."
+          dataset_path="path/to/maize/testing/dataset"
+        elif [ "${{ github.event.inputs.dataset_choice }}" == "neither" ]; then
+          if [ -z "${{ github.event.inputs.custom_dataset_path }}" ]; then
+            echo "Custom dataset path not provided."
+            exit 1
+          fi
+          echo "Using custom dataset path: ${{ github.event.inputs.custom_dataset_path }}"
+          dataset_path="${{ github.event.inputs.custom_dataset_path }}"
+        else
+          echo "Invalid dataset choice."
+          exit 1
+        fi
+
+        echo "Dataset path selected: $dataset_path"
+
+    - name: Run YOLO Inference
+      run: |
+        python run_yolo.py --model "${{ github.event.inputs.model_file_name }}" --dataset "$dataset_path"
+
+- name: Download and unzip folder
+  run: |
+    gdown --id <file-id> -O dataset.zip
+    unzip dataset.zip -d dataset/

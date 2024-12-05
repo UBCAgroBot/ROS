@@ -1,4 +1,5 @@
 name: Linting pipeline
+run-name: Linting pipeline triggered by ${{ github.actor }}
 
 on:
   workflow_call:
@@ -11,9 +12,43 @@ jobs:
     runs-on: self-hosted
     id: python
     steps:
-
     - name: Checkout Code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.head_ref }}
+
+    - name: Print branch
+      run: |
+        echo "Checked out branch: ${{ github.head_ref }}"
+
+    - name: Show directory contents
+      run: |
+        echo "Current directory: $(pwd)"
+        echo "Directory contents:"
+        ls -la
+    
+    - name: List files in the repository
+      run: |
+        echo "github workspace folder"
+        ls ${{ github.workspace }}
+
+    - name: Check current directory
+      run: pwd
+
+    - name: List files in current directory
+      run: ls -la
+
+    - name: List root directory
+      run: ls -la /
+
+    - name: List runner's work directory
+      run: ls -la /home/runner/work
+
+    - name: List GitHub workspace directory
+      run: ls -la ${{ github.workspace }}
+
+    - name: Show environment variables
+      run: env
 
     - name: Format Python Code with Black
       run: |
@@ -25,7 +60,6 @@ jobs:
         git push origin HEAD
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
 
 # for main branch should verify the ros package gets built sucessfully, unit tests run
 # for this, if the normal cpp format dont work with I() then use the ament_lint from ros
