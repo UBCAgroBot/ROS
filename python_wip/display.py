@@ -71,7 +71,7 @@ def display_annotated_image(image, boxes, labels=None, colors=None, window_name=
 
     overlay = image.copy()
     output = image.copy()
-    # Define rectangle parameters
+    # ROI HERE 
     top_left = (100, 100)
     bottom_right = (300, 300)
     alpha = 0.5
@@ -102,8 +102,9 @@ def display_annotated_image(image, boxes, labels=None, colors=None, window_name=
     # # Call the function to display the image with annotations
     # display_annotated_image(img, example_boxes, example_labels)
 
-# Example usage
-example_boxes = [[50, 50, 150, 150], [200, 80, 300, 200]]
-example_labels = ["Object A", "Object B"]
-# # run_inference_and_display('python_wip/example.jpg', 'python_wip/Maize.pt')
-display_annotated_image('python_wip/example.jpg', example_boxes, example_labels)
+if __name__ == "__main__":
+    # Example usage
+    example_boxes = [[50, 50, 150, 150], [200, 80, 300, 200]]
+    example_labels = ["Object A", "Object B"]
+    # # run_inference_and_display('python_wip/example.jpg', 'python_wip/Maize.pt')
+    display_annotated_image('python_wip/example.jpg', example_boxes, example_labels)
