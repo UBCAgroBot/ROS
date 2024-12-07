@@ -55,9 +55,11 @@ class ExterminationNode(Node):
         labels = [f"{i}%" for i in msg.confidences.data]
         final_image = display_annotated_image(raw_image, bounding_boxes, labels)
 
-        # if self.use_display_node:
-        #     cv2.imshow(self.window, final_image)
-        #     cv2.waitKey(0)
+        if self.use_display_node:
+            cv2.imshow(self.window, final_image)
+            if cv2.waitKey(0) & 0xFF == ord('q'):  # Press 'q' to close the window
+                cv2.destroyAllWindows()
+                self.use_display_node = False
 
         if len(bounding_boxes) > 0:
             self.boxes_present = 1
@@ -82,7 +84,6 @@ def main(args=None):
     except KeyboardInterrupt:
         print("Shutting down extermination node")
     finally:
-        cv2.destroyAllWindows()
         executor.shutdown()
         extermination_node.destroy_node()
         rclpy.shutdown()
