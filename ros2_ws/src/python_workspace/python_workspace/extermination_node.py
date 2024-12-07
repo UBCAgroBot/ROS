@@ -77,7 +77,7 @@ class ExterminationNode(Node):
 def main(args=None):
     rclpy.init(args=args)
     extermination_node = ExterminationNode()
-    executor = MultiThreadedExecutor(num_threads=1)
+    executor = MultiThreadedExecutor(num_threads=2)
     executor.add_node(extermination_node)
     try:
         executor.spin()
