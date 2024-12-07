@@ -1,4 +1,6 @@
 import cv2
+import sys
+import os
 
 import rclpy
 from rclpy.time import Time
@@ -11,6 +13,8 @@ from std_msgs.msg import Header, Int8, String
 from custom_interfaces.msg import InferenceOutput
 
 from .scripts.utils import ModelInference
+sys.path.append(os.path.abspath('/home/user/ROS/python_wip'))
+from display import display_annotated_image
 
 class ExterminationNode(Node):
     def __init__(self):
@@ -47,11 +51,13 @@ class ExterminationNode(Node):
         preprocessed_image = self.bridge.imgmsg_to_cv2(msg.preprocessed_image, desired_encoding='passthrough') # what is this needed for?
         raw_image = self.bridge.imgmsg_to_cv2(msg.raw_image, desired_encoding='passthrough')
         bounding_boxes = self.model.postprocess(msg.confidences.data,msg.bounding_boxes.data, raw_image,msg.velocity)
-        final_image = self.model.draw_boxes(raw_image,bounding_boxes,velocity=msg.velocity)
+        # final_image = self.model.draw_boxes(raw_image,bounding_boxes,velocity=msg.velocity)
+        labels = [f"{i}%" for i in msg.confidences.data]
+        final_image = display_annotated_image(raw_image, bounding_boxes, )
 
         if self.use_display_node:
             cv2.imshow(self.window, final_image)
-            cv2.waitKey(10)
+            cv2.waitKey(0)
 
         if len(bounding_boxes) > 0:
             self.boxes_present = 1
@@ -76,6 +82,7 @@ def main(args=None):
     except KeyboardInterrupt:
         print("Shutting down extermination node")
     finally:
+        cv2.destroyAllWindows()
         executor.shutdown()
         extermination_node.destroy_node()
         rclpy.shutdown()

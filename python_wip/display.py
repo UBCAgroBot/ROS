@@ -8,7 +8,7 @@ import time
 # should take boolean for displaying roi or not, import path verify library for image source
 # copy ultralytics color picker selection
 
-def display_annotated_image(image_path, boxes, labels=None, colors=None, window_name="Annotated Image"):
+def display_annotated_image(image, boxes, labels=None, colors=None, window_name="Annotated Image"):
     """
     Display an image with annotated bounding boxes in an OpenCV window using Arial font for labels.
 
@@ -20,7 +20,7 @@ def display_annotated_image(image_path, boxes, labels=None, colors=None, window_
         window_name (str): Name of the OpenCV window. Defaults to "Annotated Image".
     """
     # Convert OpenCV image to PIL Image
-    image = cv2.imread(image_path)
+    # image = cv2.imread(image_path)
     
     # Load Arial font
     try:
@@ -32,7 +32,7 @@ def display_annotated_image(image_path, boxes, labels=None, colors=None, window_
     if labels is None:
         labels = ["12%" for _ in boxes]
     if colors is None:
-        colors = [tuple(np.random.randint(0, 256, size=3).tolist()) for _ in boxes]
+        colors = [(0, 255, 0) for _ in boxes]
     
     tic = time.perf_counter_ns()
     annotated_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -66,11 +66,8 @@ def display_annotated_image(image_path, boxes, labels=None, colors=None, window_
 
     # Convert annotated image back to OpenCV format
     image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
-    
     toc = time.perf_counter_ns()
-    
     pil_transform = toc-tic
-    
 
     overlay = image.copy()
     output = image.copy()
@@ -84,6 +81,8 @@ def display_annotated_image(image_path, boxes, labels=None, colors=None, window_
     tic = time.perf_counter_ns()
 
     overlay = tic-toc
+    
+    return output
     
     print(f"pillow: {pil_transform/1e6} ms")
     print(f"overlay: {overlay/1e6} ms")

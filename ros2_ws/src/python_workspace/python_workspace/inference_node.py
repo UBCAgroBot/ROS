@@ -1,5 +1,6 @@
 import time
 import os
+import sys
 
 import rclpy
 from rclpy.time import Time
@@ -11,7 +12,9 @@ from sensor_msgs.msg import Image
 from std_msgs.msg import Int32MultiArray, Float32MultiArray
 from custom_interfaces.msg import ImageInput, InferenceOutput
 
-from .scripts.utils import ModelInference
+# from .scripts.utils import ModelInference
+sys.path.append(os.path.abspath('/home/user/ROS/tools/utils'))
+from new_infer import ONNXModel
 
 class InferenceNode(Node):
     def __init__(self):
@@ -26,7 +29,9 @@ class InferenceNode(Node):
         self.weights_path = self.get_parameter('weights_path').get_parameter_value().string_value
         self.precision = self.get_parameter('precision').get_parameter_value().string_value
         
-        self.model = ModelInference(self.weights_path, self.precision)
+        self.get_logger().info("Loading ONNX Model")
+        self.model = ONNXModel(self.weights_path)
+        # self.model = ModelInference(self.weights_path, self.precision)
         self.bridge = CvBridge()
 
         self.image_subscription = self.create_subscription(ImageInput, f'{self.camera_side}_image_input', self.image_callback, 10)
@@ -36,7 +41,8 @@ class InferenceNode(Node):
         self.get_logger().info("Received Image")
         opencv_img = self.bridge.imgmsg_to_cv2(msg.preprocessed_image, desired_encoding='passthrough')
         tic = time.perf_counter_ns()
-        output_img, confidences, boxes = self.model.inference(opencv_img)
+        # output_img, confidences, boxes = self.model.inference(opencv_img)
+        confidences, boxes = self.model(opencv_img)
         toc = time.perf_counter_ns()
 
         output_msg = InferenceOutput()

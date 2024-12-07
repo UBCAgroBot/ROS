@@ -33,7 +33,7 @@ def draw_bounding_boxes(image_path, bboxes):
     
     # Show the image with bounding boxes (press any key to close)
     cv2.imshow('Bounding Boxes', img)
-    cv2.waitKey(10000)
+    cv2.waitKey(100000)
     cv2.destroyAllWindows()
 
 def read_bounding_boxes(txt_file):

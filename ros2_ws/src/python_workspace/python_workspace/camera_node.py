@@ -28,13 +28,8 @@ class CameraNode(Node):
         self.roi_dimensions = self.get_parameter('roi_dimensions').get_parameter_value().integer_array_value
         self.source_type = self.get_parameter('source_type').get_parameter_value().string_value
         
-        # path = ""
-        
-        # # initialize image_source type
-        # image = ImageSource(self.source_type, path)
-
         self.shift_constant = 0
-        self.frame_rate = 1
+        self.frame_rate = 10
         self.model_dimensions = (640, 640)
         self.velocity = 0.0
         self.bridge = CvBridge()
@@ -93,7 +88,7 @@ class CameraNode(Node):
         shifted_x2 = roi_x2 + self.shift_constant
 
         preprocessed_img = image[int(roi_y1):int(roi_y2), int(shifted_x1):int(shifted_x2), :3] # replace w/ util
-        preprocessed_img = cv2.resize(preprocessed_img, self.model_dimensions) # check if necessary?
+        preprocessed_img = cv2.resize(preprocessed_img, self.model_dimensions)
         preprocessed_img_msg = self.bridge.cv2_to_imgmsg(preprocessed_img, encoding='rgb8')
 
         raw_image = image[:, :, :3]

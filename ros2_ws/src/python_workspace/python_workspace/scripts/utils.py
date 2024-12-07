@@ -100,26 +100,25 @@ class ModelInference:
         Returns:
             list: A list of refined bounding boxes in pixel coordinates (xyxy).
         """
-        velocity = int(velocity)
-        detections = []
-        if len(bbox_array) > 0 and type(bbox_array[0]) != tuple: #CONVERT TO TUPLE
-            for offset in range(int(len(bbox_array) / 4)):
-                x1 = int(bbox_array[offset * 4] * raw_image.shape[1])
-                y1 = int(bbox_array[offset * 4 + 1] * raw_image.shape[0])
-                x2 = int(bbox_array[offset * 4 + 2] * raw_image.shape[1])
-                y2 = int(bbox_array[offset * 4 + 3] * raw_image.shape[0])
-                detections.append((x1, y1, x2, y2))
-        else:
-            for bbox in bbox_array: #resize so it first the original image
-                x1,y1,x2,y2 = bbox
+        # velocity = int(velocity)
+        # detections = []
+        # if len(bbox_array) > 0 and type(bbox_array[0]) != tuple: #CONVERT TO TUPLE
+        #     for offset in range(int(len(bbox_array) / 4)):
+        #         x1 = int(bbox_array[offset * 4] * raw_image.shape[1])
+        #         y1 = int(bbox_array[offset * 4 + 1] * raw_image.shape[0])
+        #         x2 = int(bbox_array[offset * 4 + 2] * raw_image.shape[1])
+        #         y2 = int(bbox_array[offset * 4 + 3] * raw_image.shape[0])
+        #         detections.append((x1, y1, x2, y2))
+        # else:
+        #     for bbox in bbox_array: #resize so it first the original image
+        #         x1,y1,x2,y2 = bbox
 
-                x1 = int(x1 * raw_image.shape[1])
-                y1 = int(y1 * raw_image.shape[0])
-                x2 = int(x2 * raw_image.shape[1])
-                y2 = int(y2 * raw_image.shape[0])
+        #         x1 = int(x1 * raw_image.shape[1])
+        #         y1 = int(y1 * raw_image.shape[0])
+        #         x2 = int(x2 * raw_image.shape[1])
+        #         y2 = int(y2 * raw_image.shape[0])
 
-                detections.append((x1, y1, x2, y2))
-
+        #         detections.append((x1, y1, x2, y2))
 
         detections = self.object_filter(raw_image, detections) #color segmentation
         detections = self.verify_object(raw_image, detections,velocity)
