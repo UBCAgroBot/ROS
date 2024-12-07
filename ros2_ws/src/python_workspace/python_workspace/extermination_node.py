@@ -57,7 +57,7 @@ class ExterminationNode(Node):
 
         if self.use_display_node:
             cv2.imshow(self.window, final_image)
-            if cv2.waitKey(0.1) & 0xFF == ord('q'):  # Press 'q' to close the window
+            if cv2.waitKey(1) & 0xFF == ord('q'):  # Press 'q' to close the window
                 cv2.destroyAllWindows()
                 self.use_display_node = False
 
