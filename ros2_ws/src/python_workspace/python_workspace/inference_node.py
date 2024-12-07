@@ -54,11 +54,12 @@ class InferenceNode(Node):
         confidences_msg = Float32MultiArray()
         bounding_boxes.data = []
         confidences_msg.data = []
-        if len(boxes) != 0:
-            bounding_boxes.data = boxes
-            confidences_msg.data = confidences
-            output_msg.bounding_boxes = bounding_boxes
-            output_msg.confidences = confidences_msg
+        
+        # if len(boxes) != 0:
+        bounding_boxes.data = boxes
+        confidences_msg.data = confidences
+        output_msg.bounding_boxes = bounding_boxes
+        output_msg.confidences = confidences_msg
         self.box_publisher.publish(output_msg)
         
         self.get_logger().info(f"Inference: {(toc-tic)/1e6} ms")
