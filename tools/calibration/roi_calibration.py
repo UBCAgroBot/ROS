@@ -83,6 +83,7 @@ def initialize_image_source(source_type="static_image", image_path='C:/Users/ish
         raise ValueError("Invalid source type")
 
 def retrieve_zed_image(cam, orientation="left"):
+    import pyzed.sl as sl
     global previous_velocity_left, previous_velocity_right
     global previous_time_left, previous_time_right
     
