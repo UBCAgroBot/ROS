@@ -53,11 +53,11 @@ class ExterminationNode(Node):
         bounding_boxes = self.model.postprocess(msg.confidences.data,msg.bounding_boxes.data, raw_image,msg.velocity)
         # final_image = self.model.draw_boxes(raw_image,bounding_boxes,velocity=msg.velocity)
         labels = [f"{i}%" for i in msg.confidences.data]
-        final_image = display_annotated_image(raw_image, bounding_boxes, )
+        final_image = display_annotated_image(raw_image, bounding_boxes, labels)
 
-        if self.use_display_node:
-            cv2.imshow(self.window, final_image)
-            cv2.waitKey(0)
+        # if self.use_display_node:
+        #     cv2.imshow(self.window, final_image)
+        #     cv2.waitKey(0)
 
         if len(bounding_boxes) > 0:
             self.boxes_present = 1
