@@ -39,6 +39,7 @@ def initialize_image_source(source_type="static_image", image_path='C:/Users/ish
         return files
     
     elif source_type == "zed_single":
+        import pyzed.sl as sl
         init = sl.InitParameters()
         cam = sl.Camera()
         init.camera_resolution = sl.RESOLUTION.HD1080
@@ -53,6 +54,7 @@ def initialize_image_source(source_type="static_image", image_path='C:/Users/ish
         return cam
     
     elif source_type == "zed_double":
+        import pyzed.sl
         init = sl.InitParameters()
         cam1 = sl.Camera()
         cam2 = sl.Camera()
@@ -178,6 +180,7 @@ def roi_calibrator(source_type="static_image", images_path='C:/Users/Ishaan/Codi
             
         elif source_type == "zed_single":
             image, velocity = retrieve_zed_image(cam, orientation)
+            velocity = 0
             if orientation == "left":
                 shifted_roi_x = roi_x + abs(velocity) * shift_constant
             else:

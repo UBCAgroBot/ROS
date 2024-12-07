@@ -55,9 +55,9 @@ class ExterminationNode(Node):
         labels = [f"{i}%" for i in msg.confidences.data]
         final_image = display_annotated_image(raw_image, bounding_boxes, labels)
 
-        if self.use_display_node:
-            cv2.imshow("left window", final_image)
-            cv2.waitKey(1)
+        # if self.use_display_node:
+        #     cv2.imshow("left window", final_image)
+        #     cv2.waitKey(1)
 
         if len(bounding_boxes) > 0:
             self.boxes_present = 1
