@@ -3,6 +3,9 @@ import os
 import numpy as np
 from typing import Tuple, List
 import torch
+import torch.nn.functional as F
+import torchvision.ops as ops
+import torchvision.transforms as T
 
 # Utility class for the Python workspace
 class ModelInferencePytorch:
@@ -19,140 +22,131 @@ class ModelInferencePytorch:
         if weights_path is None or precision is None:
             self.model = None
             return
-        else:
-            self.precision = precision
-            if not os.path.exists(weights_path):
-                print(f"Weights file not found at {weights_path}")
-                raise FileNotFoundError(f"Weights file not found at {weights_path}")
+            
+        self.precision = precision
+        if not os.path.exists(weights_path):
+            raise FileNotFoundError(f"Weights file not found at {weights_path}")
+            
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.model = torch.hub.load('ultralytics/yolov5', 'custom', path=weights_path)
+        self.model.to(self.device)
+        if precision == "fp16":
+            self.model.half()
+        self.model.eval()
 
-            # Load the YOLOv5 model
-            self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-            self.model = torch.hub.load('ultralytics/yolov5', 'custom', path=weights_path)
-            self.model.to(self.device)
-            self.model.eval()
-
-            # YOLOv5 handles preprocessing internally
+        # Pre-define transforms
+        self.preprocess_transform = T.Compose([
+            T.ToTensor(),
+            T.Lambda(lambda x: x.to(self.device)),
+            T.Lambda(lambda x: x.half() if precision == "fp16" else x),
+            T.Resize(self.POSTPROCESS_OUTPUT_SHAPE),
+            T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        ])
 
     def preprocess(self, image: np.ndarray):
-        """
-        Preprocesses the input image for the YOLOv5 model.
-        """
-        # Pytorch expects RGB input, convert image from BGR (OpenCV format) to RGB
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        return image
-
-    def inference(self, image_array: np.ndarray):
-        """
-        Perform inference on the provided image array using the YOLOv5 model.
-
-        Returns:
-            tuple: A tuple containing:
-            - out_img (np.ndarray): The output image with bounding boxes drawn.
-            - confidences (np.ndarray): An array of confidence scores for each detected object.
-            - boxes (np.ndarray): An array of bounding boxes in the format [x1, y1, x2, y2].
-        """
-        if self.model is None:
-            raise Exception("Model was not initialized; inference cannot be done.")
-
-        # Preprocess the image
-        image = self.preprocess(image_array)
-
-        # Run inference
-        results = self.model(image)
-
-        # Extract bounding boxes, confidences, and class labels
-        detections = results.xyxy[0]  # detections on the first image
-        # Each detection is (x1, y1, x2, y2, confidence, class)
-
-        if detections is not None and len(detections) > 0:
-            detections = detections.cpu().numpy()
-
-            boxes = detections[:, :4]       # x1, y1, x2, y2
-            confidences = detections[:, 4]
-            class_ids = detections[:, 5]
-
-            # Draw bounding boxes on the image
-            out_img = image_array.copy()
-            for box in boxes:
-                x1, y1, x2, y2 = box.astype(int)
-                cv2.rectangle(out_img, (x1, y1), (x2, y2), (255, 0, 0), 2)
-
-            return out_img, confidences, boxes
-        else:
-            return image_array, np.array([]), np.array([])
+        """Optimized preprocessing using PyTorch transforms"""
+        # Convert BGR to RGB
+        image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        # Process image with pre-defined transforms
+        return self.preprocess_transform(image_rgb)
 
     def postprocess(self, confidences, bbox_array, raw_image: np.ndarray, velocity=0):
-        """
-        Postprocesses the bounding boxes to apply color segmentation
-        and adjusts them to fit within a shifted region of interest (ROI).
-
-        Returns:
-            list: A list of refined bounding boxes in pixel coordinates (x1, y1, x2, y2).
-        """
-        detections = self.object_filter(raw_image, bbox_array)  # Color segmentation
-        detections = self.verify_object(raw_image, detections, velocity)
-        return detections
-
-    # The rest of the methods remain the same as your original code
-
-    def object_filter(self, image: np.ndarray, bboxes: List[Tuple[int, int, int, int]]) -> List[Tuple[int, int, int, int]]:
-        """
-        Filters objects in an image based on bounding boxes and color thresholds.
-        """
-        detections = []
-        for bbox in bboxes:
-            x1, y1, x2, y2 = bbox.astype(int)
-            roi = image[y1:y2, x1:x2]
+        """Optimized postprocessing using PyTorch operations"""
+        # Inputs to tensors
+        boxes = torch.from_numpy(bbox_array).to(self.device)
+        scores = torch.from_numpy(confidences).to(self.device)
+        
+        # Apply NMS
+        keep_indices = ops.nms(boxes, scores, iou_threshold=0.45)
+        filtered_boxes = boxes[keep_indices]
+        
+        # Convert to HSV color space
+        image_tensor = torch.from_numpy(raw_image).to(self.device)
+        image_tensor = image_tensor.permute(2, 0, 1).unsqueeze(0)  # [1, C, H, W]
+        
+        # Color filtering
+        hsv_tensor = self._bgr_to_hsv(image_tensor)
+        
+        filtered_detections = []
+        for box in filtered_boxes:
+            x1, y1, x2, y2 = map(int, box.cpu().tolist())
+            roi = hsv_tensor[:, :, y1:y2, x1:x2]
             
-            # Perform color segmentation
-            hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
-            lower_hue = 35
-            upper_hue = 80
-            lower_mask = hsv[:, :, 0] > lower_hue
-            upper_mask = hsv[:, :, 0] < upper_hue
-            saturation_mask = hsv[:, :, 1] > 50
-            mask = lower_mask & upper_mask & saturation_mask
+            # Color thresholding
+            hue_mask = (roi[:, 0] > 35/180) & (roi[:, 0] < 80/180)
+            sat_mask = roi[:, 1] > 0.196  # 50/255
+            
+            if torch.sum(hue_mask & sat_mask) > self.CONTOUR_AREA_THRESHOLD:
+                filtered_detections.append([x1, y1, x2, y2])
+        
+        # Verify objects within ROI
+        return self._verify_objects_batch(filtered_detections, raw_image, velocity)
 
-            # Check if the mask has significant area
-            if np.sum(mask) > self.CONTOUR_AREA_THRESHOLD:
-                # Refine using contours
-                gray_image = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
-                gray_image = gray_image * mask.astype(np.uint8)
-                _, thresh = cv2.threshold(gray_image, 0, 255, cv2.THRESH_BINARY)
+    def _bgr_to_hsv(self, x):
+        """Convert BGR tensor to HSV"""
+        # Normalize to [0,1]
+        x = x.float() / 255.0
+        
+        # Reshape for easier computation
+        x = x.squeeze(0).permute(1, 2, 0)
+        
+        # Extract channels
+        b, g, r = x[..., 0], x[..., 1], x[..., 2]
+        
+        max_rgb, _ = torch.max(x, dim=-1)
+        min_rgb, _ = torch.min(x, dim=-1)
+        diff = max_rgb - min_rgb
+        
+        # Calculate Hue
+        hue = torch.zeros_like(max_rgb)
+        mask = diff != 0
+        
+        # Red is max
+        mask_r = mask & (max_rgb == r)
+        hue[mask_r] = (60 * (g[mask_r] - b[mask_r]) / diff[mask_r]) % 360
+        
+        # Green is max
+        mask_g = mask & (max_rgb == g)
+        hue[mask_g] = 60 * (2 + (b[mask_g] - r[mask_g]) / diff[mask_g])
+        
+        # Blue is max
+        mask_b = mask & (max_rgb == b)
+        hue[mask_b] = 60 * (4 + (r[mask_b] - g[mask_b]) / diff[mask_b])
+        
+        hue = hue / 360  # Normalize hue to [0,1]
+        
+        # Calculate Saturation
+        sat = torch.zeros_like(max_rgb)
+        mask = max_rgb != 0
+        sat[mask] = diff[mask] / max_rgb[mask]
+        
+        # Stack channels
+        hsv = torch.stack([hue, sat, max_rgb], dim=0).unsqueeze(0)
+        return hsv
 
-                contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-                for cnt in contours:
-                    area = cv2.contourArea(cnt)
-                    if area > self.CONTOUR_AREA_THRESHOLD:
-                        x, y, w, h = cv2.boundingRect(cnt)
-                        detections.append((x + x1, y + y1, x + w + x1, y + h + y1))
-        return detections
-
-    def verify_object(self, raw_image, bboxes, velocity=0):
-        """
-        Adjusts bounding boxes based on the region of interest (ROI) and velocity.
-        """
-        velocity = int(velocity)
-        roi_x1, roi_y1, roi_x2, roi_y2 = self.get_roi_coordinates(image=raw_image)
-        shifted_roi_x1, shifted_roi_y1, shifted_roi_x2, shifted_roi_y2 = roi_x1 - velocity, roi_y1, roi_x2 - velocity, roi_y2
-
-        adjusted_bboxes = []
-        for bbox in bboxes:
-            x1, y1, x2, y2 = bbox
-
-            # Check if bounding box is within shifted ROI
-            if not ((x1 < shifted_roi_x1 and x2 < shifted_roi_x1) or
-                    (x1 > shifted_roi_x2 and x2 > shifted_roi_x2) or
-                    (y1 < roi_y1 and y2 < roi_y1) or
-                    (y1 > roi_y2 and y2 > roi_y2)):
-                x1 = max(shifted_roi_x1, min(x1, shifted_roi_x2))  # Set the coordinates to be inside ROI
-                x2 = max(shifted_roi_x1, min(x2, shifted_roi_x2))
-                y1 = max(shifted_roi_y1, min(y1, shifted_roi_y2))
-                y2 = max(shifted_roi_y1, min(y2, shifted_roi_y2))
-
-                adjusted_bboxes.append([x1, y1, x2, y2])
-
-        return adjusted_bboxes
+    def _verify_objects_batch(self, detections, raw_image, velocity):
+        """Batch verification of objects within ROI"""
+        if not detections:
+            return []
+            
+        boxes = torch.tensor(detections, device=self.device)
+        roi = self.get_roi_coordinates(raw_image)
+        roi_tensor = torch.tensor(roi, device=self.device)
+        
+        # Apply velocity shift
+        shifted_roi = roi_tensor.clone()
+        shifted_roi[::2] -= velocity  # Shift x coordinates
+        
+        # Check if boxes are within ROI
+        x1, y1, x2, y2 = boxes.t()
+        sx1, sy1, sx2, sy2 = shifted_roi
+        
+        # Create masks for valid boxes
+        valid_x = (x1 >= sx1) & (x2 <= sx2)
+        valid_y = (y1 >= sy1) & (y2 <= sy2)
+        valid_boxes = valid_x & valid_y
+        
+        return boxes[valid_boxes].cpu().numpy().tolist()
 
     def draw_boxes(self, image: np.ndarray, bboxes: list, with_roi=True, with_roi_shift=True, velocity=0) -> np.ndarray:
         """
