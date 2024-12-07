@@ -56,10 +56,8 @@ class ExterminationNode(Node):
         final_image = display_annotated_image(raw_image, bounding_boxes, labels)
 
         if self.use_display_node:
-            cv2.imshow(self.window, final_image)
-            if cv2.waitKey(1) & 0xFF == ord('q'):  # Press 'q' to close the window
-                cv2.destroyAllWindows()
-                self.use_display_node = False
+            cv2.imshow("left window", final_image)
+            cv2.waitKey(1)
 
         if len(bounding_boxes) > 0:
             self.boxes_present = 1
@@ -77,16 +75,24 @@ class ExterminationNode(Node):
 def main(args=None):
     rclpy.init(args=args)
     extermination_node = ExterminationNode()
-    executor = MultiThreadedExecutor(num_threads=2)
-    executor.add_node(extermination_node)
+    # executor = MultiThreadedExecutor(num_threads=1)
+    # executor.add_node(extermination_node)
+    # try:
+    #     executor.spin()
+    # except KeyboardInterrupt:
+    #     print("Shutting down extermination node")
+    # finally:
+    #     executor.shutdown()
+    #     extermination_node.destroy_node()
+    #     rclpy.shutdown()
     try:
-        executor.spin()
+        rclpy.spin(extermination_node)
     except KeyboardInterrupt:
-        print("Shutting down extermination node")
+        extermination_node.get_logger().info("shutting down")
     finally:
-        executor.shutdown()
         extermination_node.destroy_node()
         rclpy.shutdown()
+        cv2.destroyAllWindows()
 
 if __name__ == '__main__':
     main()
