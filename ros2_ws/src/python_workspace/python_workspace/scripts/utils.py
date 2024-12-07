@@ -119,6 +119,8 @@ class ModelInference:
         #         y2 = int(y2 * raw_image.shape[0])
 
         #         detections.append((x1, y1, x2, y2))
+        
+        detections = bbox_array
 
         detections = self.object_filter(raw_image, detections) #color segmentation
         detections = self.verify_object(raw_image, detections,velocity)
