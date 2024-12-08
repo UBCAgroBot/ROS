@@ -11,6 +11,46 @@ find_package(ament_cmake REQUIRED)
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 
+find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(launch REQUIRED)
+find_package(launch_ros REQUIRED)
+
+add_executable(camera_node src/camera_node.cpp)
+ament_target_dependencies(camera_node
+  rclcpp
+  std_msgs
+  sensor_msgs
+)
+
+add_executable(proxy_node src/proxy_node.cpp)
+ament_target_dependencies(proxy_node
+  rclcpp
+  std_msgs
+)
+
+add_executable(inference_node src/inference_node.cpp)
+ament_target_dependencies(inference_node
+  rclcpp
+  std_msgs
+)
+
+add_executable(extermination_node src/extermination_node.cpp)
+ament_target_dependencies(extermination_node
+  rclcpp
+  std_msgs
+)
+
+install(TARGETS
+  camera_node
+  proxy_node
+  inference_node
+  extermination_node
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights
