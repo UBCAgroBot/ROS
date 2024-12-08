@@ -26,7 +26,8 @@ setup(
             'inference_node = python_workspace.inference_node:main',
             'extermination_node = python_workspace.extermination_node:main',
             'proxy_node = python_workspace.proxy_node:main',
-            'picture_node = python_workspace.picture_node:main' # remove later
+            'picture_node = python_workspace.picture_node:main', # remove later
+            'display_node = python_workspace.display_node:main'
         ],
     },
 

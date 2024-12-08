@@ -44,6 +44,7 @@ class ExterminationNode(Node):
         self.inference_subscription = self.create_subscription(InferenceOutput, f'{self.camera_side}_inference_output', self.inference_callback, 10)
         self.box_publisher = self.create_publisher(Int8, f'{self.camera_side}_extermination_output', 10)
         self.timer = self.create_timer(self.publishing_rate, self.timer_callback)
+        self.image_publisher = self.create_publisher(Image, 'annotated_image', 10)
 
     def inference_callback(self, msg):
         self.get_logger().info("Received Bounding Boxes")
@@ -54,7 +55,8 @@ class ExterminationNode(Node):
         # final_image = self.model.draw_boxes(raw_image,bounding_boxes,velocity=msg.velocity)
         labels = [f"{i}%" for i in msg.confidences.data]
         final_image = display_annotated_image(raw_image, bounding_boxes, labels)
-
+        image_msg = self.bridge.cv2_to_imgmsg(final_image, encoding='bgr8')
+        self.image_publisher.publish(image_msg)
         # if self.use_display_node:
         #     cv2.imshow("left window", final_image)
         #     cv2.waitKey(1)
@@ -70,7 +72,6 @@ class ExterminationNode(Node):
     def timer_callback(self):
         self.box_publisher.publish(self.boxes_msg)
         self.get_logger().info("Published results to Proxy Node")
-        
 
 def main(args=None):
     rclpy.init(args=args)

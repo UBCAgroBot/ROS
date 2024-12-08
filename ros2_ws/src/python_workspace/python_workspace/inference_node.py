@@ -1,6 +1,7 @@
 import time
 import os
 import sys
+import pycuda.driver as cuda
 
 import rclpy
 from rclpy.time import Time
@@ -19,6 +20,10 @@ from new_infer import ONNXModel
 class InferenceNode(Node):
     def __init__(self):
         super().__init__('inference_node')
+        
+        cuda.init()
+        device = cuda.Device(0)
+        self.cuda_driver_context = device.make_context()
         
         self.get_logger().info("Initializing Inference Node")
 

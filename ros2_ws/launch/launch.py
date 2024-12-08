@@ -69,5 +69,12 @@ def generate_launch_description():
                 {'camera_side': LaunchConfiguration('camera_side_exterm')}
             ],
             output='screen'
+        ),
+        
+        Node(
+            package='python_workspace',
+            executable='display_node',
+            name='display_node',
+            output='screen'
         )
     ])
