@@ -24,7 +24,7 @@ def generate_launch_description():
         # Camera Node
         Node(
             package='cpp_package',  # Replace with your package name
-            executable='CameraNode',  # The C++ executable name
+            executable='camera_node',  # The C++ executable name
             name='camera_node',
             parameters=[
                 {'camera_side': LaunchConfiguration('camera_side')},
@@ -37,7 +37,7 @@ def generate_launch_description():
         # Proxy Node
         Node(
             package='cpp_package',  # Replace with your package name
-            executable='ProxyNode',  # The C++ executable name
+            executable='proxy_nde',  # The C++ executable name
             name='proxy_node',
             parameters=[
                 {'usb_port': LaunchConfiguration('usb_port')}
@@ -48,7 +48,7 @@ def generate_launch_description():
         # Inference Node
         Node(
             package='cpp_package',  # Replace with your package name
-            executable='InferenceNode',  # The C++ executable name
+            executable='inference_node',  # The C++ executable name
             name='inference_node',
             parameters=[
                 {'weights_path': LaunchConfiguration('weights_path')},
@@ -61,7 +61,7 @@ def generate_launch_description():
         # Extermination Node
         Node(
             package='cpp_package',  # Replace with your package name
-            executable='ExterminationNode',  # The C++ executable name
+            executable='extermination_node',  # The C++ executable name
             name='extermination_node',
             parameters=[
                 {'use_display_node': LaunchConfiguration('use_display_node')},
