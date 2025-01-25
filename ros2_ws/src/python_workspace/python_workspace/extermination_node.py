@@ -52,7 +52,7 @@ class ExterminationNode(Node):
         return the tracker's current row count
         """
         row_count = self.tracker.reset()
-        response.row_count = row_count
+        response.plant_count = row_count
         return response
 
     def inference_callback(self, msg):

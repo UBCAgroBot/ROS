@@ -175,7 +175,6 @@ class ModelInference:
             for cnt in contours:
                 area = cv2.contourArea(cnt)
                 if area > self.CONTOUR_AREA_THRESHOLD:
-                    print(area)
                     x, y, w, h = cv2.boundingRect(cnt)
                     detections.append((x + bbox_offset_x, y + bbox_offset_y, x + w + bbox_offset_x, y + h + bbox_offset_y))
         
@@ -209,11 +208,6 @@ class ModelInference:
             adjusted_bboxes = []
             for bbox in bboxes:
                 x1, y1, x2, y2 = bbox
-                # #     # Ensure the bounding box doesn't exceed the original image dimensions
-                # x1 = max(0, min(x1, width))
-                # x2 = max(0, min(x2, width))
-                # y1 = max(0, min(y1, height))
-                # y2 = max(0, min(y2, height))
 
                 if ((x1 < shifted_roi_x1 and x2 < shifted_roi_x1) #remove boxes that are out of point
                 or (x1 > shifted_roi_x2 and x2 > shifted_roi_x2)
@@ -271,7 +265,7 @@ class ModelInference:
         for bbox in bboxes:
             x1, y1, x2, y2 = map(int, bbox)
 
-            print(f"Bounding box: ({x1}, {y1}), ({x2}, {y2})")
+            # print(f"Bounding box: ({x1}, {y1}), ({x2}, {y2})")
 
             image = cv2.rectangle(image, (x1, y1), (x2, y2),(255, 0, 0), 2)
 

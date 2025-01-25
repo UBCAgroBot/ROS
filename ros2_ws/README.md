@@ -29,7 +29,7 @@ To set up and run this workspace, you have several options:
 ### With sample images
 > **Warning:** The paths mentioned in the instructions are absolute paths based on the Jetson's directory. These arguments can be changed to be relative to your current directory. 
 
-1. Navigate to the `/ROS/workspace_python/ros2_ws` directory.
+1. Navigate to the `/ROS/ros2_ws` directory.
 2. Create temporary variables to store the paths values:
     ```bash
     IMAGE_FOLDER_PATH=/home/user/ROS/assets/maize
