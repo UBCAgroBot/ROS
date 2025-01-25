@@ -3,6 +3,10 @@ name: Deployment Pipeline
 run-name: Deployment pipeline triggered by ${{ github.actor }} 
 
 on: 
+  # push:
+  #   branches:
+  #     - main
+
   workflow_call:
     inputs:
       container_branch:
@@ -37,6 +41,9 @@ jobs:
           CONTAINER_VERSION=${{ github.event.inputs.container_version }}
           IMAGE_TAG="jetson_ros:${CONTAINER_BRANCH}-v${CONTAINER_VERSION}"
           echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+# should verify flags for running th econtainer work
+# using actions_scripts folder
 
   # testing:
   #   runs-on: self-hosted

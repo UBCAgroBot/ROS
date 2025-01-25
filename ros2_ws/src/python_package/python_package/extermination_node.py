@@ -9,8 +9,10 @@ from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
 from std_msgs.msg import Header, Int8, String
 from custom_interfaces.msg import InferenceOutput
+from custom_interfaces.srv import GetRowPlantCount
 
 from .scripts.utils import ModelInference
+from .scripts.tracker import EuclideanDistTracker
 
 class ExterminationNode(Node):
     def __init__(self):
@@ -32,6 +34,7 @@ class ExterminationNode(Node):
         self.minimum_confidence = 0.5
         self.boxes_present = 0
         self.model = ModelInference()
+        self.tracker = EuclideanDistTracker()
         self.bridge = CvBridge()
         self.boxes_msg = Int8()
         self.boxes_msg.data = 0
@@ -40,6 +43,18 @@ class ExterminationNode(Node):
         self.box_publisher = self.create_publisher(Int8, f'{self.camera_side}_extermination_output', 10)
         self.timer = self.create_timer(self.publishing_rate, self.timer_callback)
 
+        self.get_tracker_row_count_service = self.create_service(GetRowPlantCount, 'reset_tracker', self.get_tracker_row_count_callback)
+
+
+    def get_tracker_row_count_callback(self,request,response):
+        """
+        When navigation requests this service, reset the tracker count so that it knows to start a new row. 
+        return the tracker's current row count
+        """
+        row_count = self.tracker.reset()
+        response.row_count = row_count
+        return response
+
     def inference_callback(self, msg):
         self.get_logger().info("Received Bounding Boxes")
         
@@ -47,6 +62,8 @@ class ExterminationNode(Node):
         raw_image = self.bridge.imgmsg_to_cv2(msg.raw_image, desired_encoding='passthrough')
         bounding_boxes = self.model.postprocess(msg.confidences.data,msg.bounding_boxes.data, raw_image,msg.velocity)
         final_image = self.model.draw_boxes(raw_image,bounding_boxes,velocity=msg.velocity)
+
+        self.tracker.update(bounding_boxes)
 
         if self.use_display_node:
             cv2.imshow(self.window, final_image)

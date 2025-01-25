@@ -1,66 +1,73 @@
-# Lints the code of a branch
 name: Linting pipeline
 
 on:
   workflow_call:
+  # push:
+  #   branches-ignore:
+  #     - main
 
 jobs:
-  lint-cpp:
-    runs-on: self-hosted
-    permissions:
-      checks: write
-      pull-requests: write
-    id: cpp
-    steps:
-      - name: C++ lint
-        uses: cpp-linter/cpp-linter-action@v2
-        with:
-          style: "file"
-          tidy-checks: ""
-          thread-comments: ${{ github.event_name == 'pull_request' && 'update' }}
-
   lint-python:
     runs-on: self-hosted
-    permissions: 
-      checks: write
-      pull-requests: write
-      id: python
-      steps:
-      - name: Lint with pylint
-        run: |
-          pylint --disable=C0301 --disable=C0326 *.py
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-      
-      - name: Lint with flake8
-        run: |
-          # stop the build if there are Python syntax errors or undefined names
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    id: python
+    steps:
 
-      - name: Check for linting errors
-        id: lint-check
-        run: |
-          if [ -f lint-results.txt ]; then
-            echo "Linting issues found"
-            cat lint-results.txt
-            exit 1
-          else
-            echo "No linting issues found"
-          fi
-  
-  update-pr:
-    run: |
-      git config user.name "github-actions"
-      git config user.email "github-actions@github.com"
-      
-      if [[ $(git status --porcelain) ]]; then
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Format Python Code with Black
+      run: |
+        black . 
+        git config user.name "GitHub Actions"
+        git config user.email "actions@github.com"
         git add .
-        git commit -m "Auto-fix lint issues"
-        git push origin HEAD:${{ github.head_ref }}
-      else
-        echo "No lint fixes applied, nothing to commit."
-      fi
+        git commit -m "Apply Black formatting" || echo "No changes to commit"
+        git push origin HEAD
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
+# for main branch should verify the ros package gets built sucessfully, unit tests run
+# for this, if the normal cpp format dont work with I() then use the ament_lint from ros
+
+  lint-cpp:
+    runs-on: self-hosted
+    id: cpp
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    # path agnostic ros2 colcon build
+    - name: Run Colcon build
+
+
+    - name: Locate and Run Clang-Tidy
+      run: |
+        COMPILE_COMMANDS_PATH=$(find build/ -name compile_commands.json | head -n 1)
+        
+        if [ -z "$COMPILE_COMMANDS_PATH" ]; then
+          echo "Error: compile_commands.json not found!"
+          exit 1
+        fi
+
+        echo "Using compile_commands.json located at: $COMPILE_COMMANDS_PATH"
+
+        find src/ -name "*.cpp" | xargs clang-tidy --fix --fix-errors -p $(dirname $COMPILE_COMMANDS_PATH)
+
+    # Format C++ files with clang-format
+    - name: Auto-fix C++ Formatting Issues
+      run: |
+        find . -name '*.cpp' -o -name '*.hpp' | xargs clang-format -i
+
+    - name: Commit and Push Changes
+      run: |
+        git config user.name "GitHub Actions"
+        git config user.email "actions@github.com"
+        git add .
+        git commit -m "Auto-format code with clang-tidy/clang-format" || echo "No changes to commit"
+        git push origin HEAD
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 # bug checks
 # compilation
@@ -71,3 +78,9 @@ jobs:
 # Black  
 # Clang-tidy 
 # Isort 
+
+# flake8 --fix or autopep8 --in-place --aggressive --aggressive
+# git config --global user.email "actions@github.com"
+# how to run inside container, need to make linting/formatting container w/ git, python, etc.
+# git config --global user.name "github-actions"
+# git config --global user.email "github-actions@github.com"
