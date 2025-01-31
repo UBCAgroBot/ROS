@@ -44,3 +44,4 @@ def load_images(image_path):
     
     logging.info(f"{len(files)} from {image_path} loaded successfully")
     return files
+

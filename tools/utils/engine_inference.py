@@ -1,60 +1,6 @@
-import tensorrt as trt
-import pycuda.driver as cuda
-import numpy as np
-import cupy as cp
-import time
-import torch
-
 # should add quantized and fp16 
 
-# Load TensorRT model
-TRT_LOGGER = trt.Logger(trt.Logger.WARNING)
-
 class TRTEngine:
-    def __init__(self, engine_path): # strip_weights, precision
-        self.engine = self.load_engine(engine_path)
-        self.context = self.engine.create_execution_context()
-        # self.precision = precision
-        self.stream = cuda.Stream()
-        self.engine = None
-        self.context = None
-        self.h_input = None
-        self.h_output = None
-        self.d_input = None
-        self.d_output = None
-        
-        self.allocate_buffers()
-
-    def load_engine(self, engine_path):
-        with open(engine_path, 'rb') as f, trt.Runtime(TRT_LOGGER) as runtime:
-            return runtime.deserialize_cuda_engine(f.read())
-
-    def allocate_buffers(self):
-        engine = self.engine
-        self.stream = cuda.Stream()
-        
-        self.input_shape = engine.get_binding_shape(0)
-        self.output_shape = engine.get_binding_shape(1)
-
-        # self.d_output = cuda.mem_alloc(trt.volume(self.output_shape) * cp.dtype(cp.float32).itemsize) 
-
-        # Allocate device memory for input/output
-        self.d_input = cuda.mem_alloc(trt.volume(self.input_shape) * np.dtype(np.float32).itemsize)
-        self.d_output = cuda.mem_alloc(trt.volume(self.output_shape) * np.dtype(np.float32).itemsize)
-
-        # Allocate host pinned memory for input/output (pinned memory for input/output buffers)
-        self.h_input = cuda.pagelocked_empty(trt.volume(self.input_shape), dtype=np.float32) # cp.float
-        self.h_output = cuda.pagelocked_empty(trt.volume(self.output_shape), dtype=np.float32)
-
-    def warmup(self, engine_type):
-        for _ in range(10):  # Warmup with 10 inference passes
-            random_input = np.random.randn(*self.input_shape).astype(np.float32)
-            cuda.memcpy_htod(self.d_input, random_input)
-            # if engine_type == "torch_trt":
-            #     self.engine(random_input)
-            # else:
-            self.context.execute(bindings=[int(self.d_input), int(self.d_output)])
-
     # time
     # performs inference on the input data using the TensorRT engine
     def infer(self, engine, inputs, outputs, bindings, stream, input_data):
@@ -168,33 +114,6 @@ def infer_with_tensorrt(engine, random_input):
 
     return h_output, (toc - tic) / 1e6
 
-def verify_trt(model_path, output_path, fp_16, input_shape):
-    print("Verifying the converted model")
-    if fp_16:
-        random_input = np.random.randn(*input_shape).astype(np.float16)
-    else:
-        random_input = np.random.randn(*input_shape).astype(np.float32)
-    
-    # Load the TensorRT engine
-    engine = load_engine(output_path)
-
-    # Run inference
-    trt_output, trt_inference = infer_with_tensorrt(engine, random_input)
-    print("TensorRT inference time:", trt_inference, "ms")
-        
-    # Get ONNX output
-    from ONNX_Verify import predict_onnx
-    onnx_output, onnx_inference = predict_onnx(model_path, fp_16, input_shape)
-    print("ONNX inference time:", onnx_inference, "ms")
-
-    # Calculate MSE (Mean Squared Error)
-    mse = np.mean((onnx_output - trt_output) ** 2)
-    print("MSE between ONNX and TensorRT outputs:", mse)
-
-    # Calculate MAE (Mean Absolute Error)
-    mae = np.mean(np.abs(onnx_output - trt_output))
-    print("MAE between ONNX and TensorRT outputs:", mae)
-
 if self.engine_path.endswith('.pth'):
     from torch2trt import TRTModule
     import torch
@@ -231,18 +150,6 @@ def load_stripped_engine_and_refit(self):
         # Refit weights here if necessary
         assert refitter.refit_cuda_engine()
         return engine
-
-    def load_normal_engine(self):
-        if not os.path.exists(self.engine_path):
-            self.get_logger().error(f"Engine file not found at {self.engine_path}")
-            return None
-
-        TRT_LOGGER = trt.Logger(trt.Logger.WARNING)
-        with open(self.engine_path, "rb") as f, trt.Runtime(TRT_LOGGER) as runtime:
-            engine = runtime.deserialize_cuda_engine(f.read())
-        context = engine.create_execution_context()
-        self.get_logger().info(f"Successfully loaded engine from {self.engine_path}")
-        return engine, context
 
 # proper inference:
 def run_inference(self, d_input_ptr):

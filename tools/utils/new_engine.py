@@ -11,6 +11,8 @@ import time
 import numpy as np
 import torch
 
+# strip_weights, precision
+
 class TRTEngine:
     def __init__(self, trt_path, engine=None):
         warnings.filterwarnings("ignore")
@@ -27,8 +29,10 @@ class TRTEngine:
         self.stream = cuda.Stream()
         self.input_shape = (self.engine).get_binding_shape(0)
         self.output_shape = (self.engine).get_binding_shape(1)
+        
         self.d_input = cuda.mem_alloc(trt.volume(self.input_shape) * cp.dtype(cp.float32).itemsize) # change to fp16, etc.
         self.d_output = cuda.mem_alloc(trt.volume(self.output_shape) * cp.dtype(cp.float32).itemsize) 
+        
         # Allocate host pinned memory for input/output (pinned memory for input/output buffers)
         self.h_input = cuda.pagelocked_empty(trt.volume(self.input_shape), dtype=np.float32)
         self.h_output = cuda.pagelocked_empty(trt.volume(self.output_shape), dtype=np.float32)
@@ -41,7 +45,6 @@ class TRTEngine:
         self.allocate_buffers()
         self.warmup()
         
-        
     def load_normal_engine(self):
         if self.engine is None:
             assert self.trt_path is not None
@@ -52,20 +55,24 @@ class TRTEngine:
             
             context = engine.create_execution_context()
             
+        self.get_logger().info(f"Successfully loaded engine from {self.engine_path}")
         return engine, context
         
-    def warmup(self):
+    def warmup(self, loop=20):
         input_shape = self.input_shape
         shape = (1, 3, self.input_size, self.input_size)
         image = np.zeros(shape, dtype='float32')
         
-        for _ in range(20):
+        for _ in range(loop):
             random_input = np.random.randn(*input_shape).astype(np.float32)
             cuda.memcpy_htod(self.d_input, random_input)
             self.context.execute(bindings=[int(self.d_input), int(self.d_output)])
 
         self.get_logger().info(f"Engine warmed up with 20 inference passes.")
-        
+
+# execute_async_v2? -> check inference examples
+
+    # time the function
     def __call__(self, image):
         image, scale = self.resize(image, self.input_size)
         # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -73,9 +80,13 @@ class TRTEngine:
         image = image.astype('float32') / 255
         image = image[np.newaxis, ...]
 
+        tic = time.perf_counter_ns()
         cuda.memcpy_htod(self.d_input, image)
         self.context.execute(bindings=[int(self.d_input), int(self.d_output)])
         cuda.memcpy_dtoh(self.h_output, self.d_output)
+        toc = time.perf_counter_ns()
+        
+        duration = (toc - tic) / 1e6
         
         outputs = self.h_output
         outputs = np.transpose(np.squeeze(outputs[0]))

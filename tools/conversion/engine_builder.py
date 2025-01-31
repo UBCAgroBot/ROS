@@ -225,3 +225,30 @@ with open("model_stripped.engine", "wb") as f:
 #     args = parser.parse_args()
     
 #     convert_pt_to_trt(args.modelpath, args.outputpath, args.FP16_mode, args.input_shape, args.verify)
+
+def verify_trt(model_path, output_path, fp_16, input_shape):
+    print("Verifying the converted model")
+    if fp_16:
+        random_input = np.random.randn(*input_shape).astype(np.float16)
+    else:
+        random_input = np.random.randn(*input_shape).astype(np.float32)
+    
+    # Load the TensorRT engine
+    engine = load_engine(output_path)
+
+    # Run inference
+    trt_output, trt_inference = infer_with_tensorrt(engine, random_input)
+    print("TensorRT inference time:", trt_inference, "ms")
+        
+    # Get ONNX output
+    from ONNX_Verify import predict_onnx
+    onnx_output, onnx_inference = predict_onnx(model_path, fp_16, input_shape)
+    print("ONNX inference time:", onnx_inference, "ms")
+
+    # Calculate MSE (Mean Squared Error)
+    mse = np.mean((onnx_output - trt_output) ** 2)
+    print("MSE between ONNX and TensorRT outputs:", mse)
+
+    # Calculate MAE (Mean Absolute Error)
+    mae = np.mean(np.abs(onnx_output - trt_output))
+    print("MAE between ONNX and TensorRT outputs:", mae)
