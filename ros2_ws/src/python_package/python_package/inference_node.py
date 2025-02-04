@@ -16,7 +16,7 @@ from .scripts.utils import ModelInference
 class InferenceNode(Node):
     def __init__(self):
         super().__init__('inference_node')
-        
+
         self.get_logger().info("Initializing Inference Node")
 
         self.declare_parameter('weights_path', '/home/user/ROS/models/maize/Maize.onnx')
@@ -25,13 +25,13 @@ class InferenceNode(Node):
         self.camera_side = self.get_parameter('camera_side').get_parameter_value().string_value
         self.weights_path = self.get_parameter('weights_path').get_parameter_value().string_value
         self.precision = self.get_parameter('precision').get_parameter_value().string_value
-        
+
         self.model = ModelInference(self.weights_path, self.precision)
         self.bridge = CvBridge()
 
         self.image_subscription = self.create_subscription(ImageInput, f'{self.camera_side}_image_input', self.image_callback, 10)
         self.box_publisher = self.create_publisher(InferenceOutput,f'{self.camera_side}_inference_output', 10)
-    
+
     def image_callback(self, msg):
         self.get_logger().info("Received Image")
         opencv_img = self.bridge.imgmsg_to_cv2(msg.preprocessed_image, desired_encoding='passthrough')
@@ -54,7 +54,7 @@ class InferenceNode(Node):
             output_msg.bounding_boxes = bounding_boxes
             output_msg.confidences = confidences_msg
         self.box_publisher.publish(output_msg)
-        
+
         self.get_logger().info(f"Inference: {(toc-tic)/1e6} ms")
 
 def main(args=None):
@@ -62,7 +62,7 @@ def main(args=None):
     inference_node = InferenceNode()
     executor = MultiThreadedExecutor(num_threads=1)
     executor.add_node(inference_node)
-    
+
     try:
         executor.spin()
     except KeyboardInterrupt:

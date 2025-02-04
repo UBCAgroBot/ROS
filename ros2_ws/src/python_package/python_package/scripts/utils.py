@@ -25,7 +25,7 @@ class ModelInference:
             if not os.path.exists(weights_path):
                 print(f"weights file not found at {weights_path}")
                 raise FileNotFoundError(f"weights file not found at {weights_path}")
-            
+
             self.yolo = YOLO(weights_path)
 
     def preprocess(self, image: np.ndarray):
@@ -36,7 +36,7 @@ class ModelInference:
         resized_up = cv2.resize(image, self.POSTPROCESS_OUTPUT_SHAPE)
 
         return resized_up
-    
+
     def initialise_model(self, weights_path):
         """
         Initialize the YOLO model with the given weights.
@@ -51,7 +51,7 @@ class ModelInference:
         if not os.path.exists(weights_path):
             print(f"weights file not found at {weights_path}")
             raise FileNotFoundError(f"weights file not found at {weights_path}")
-        
+
         self.yolo = YOLO(weights_path)
 
     def inference(self, image_array: np.ndarray) -> Results:
@@ -83,20 +83,18 @@ class ModelInference:
             boxes = np.array(result.boxes.xyxyn.tolist()).reshape(-1)
             confidences = np.array(result.boxes.conf.tolist()).reshape(-1)
             return out_img, list(confidences), list(boxes)
-        
+
         return image_array, [], []
 
     def postprocess(self, confidence, bbox_array,raw_image: np.ndarray, velocity=0):
         """
         Postprocesses the bounding boxes to convert them from normalized coordinates (xyxyn) to pixel coordinates (xyxy).
         Applies color segmentation to refine the bounding boxes and adjusts them to fit within a shifted region of interest (ROI).
-
         Args:
             confidence (list): List of confidence scores for each bounding box.
             bbox_array (list): List of bounding boxes in normalized coordinates (xyxyn).
             raw_image (np.ndarray): The original input image.
             velocity (int, optional): The velocity to shift the ROI. Default is 0.
-
         Returns:
             list: A list of refined bounding boxes in pixel coordinates (xyxy).
         """
@@ -141,7 +139,7 @@ class ModelInference:
                             as a tuple of four integers (x1, y1, x2, y2) corresponding to the coordinates 
                             of the top-left and bottom-right corners.
         """
-        
+
         detections = []
         for bbox in bboxes:
             x1, y1, x2, y2 = map(int, bbox)
@@ -178,9 +176,9 @@ class ModelInference:
                     print(area)
                     x, y, w, h = cv2.boundingRect(cnt)
                     detections.append((x + bbox_offset_x, y + bbox_offset_y, x + w + bbox_offset_x, y + h + bbox_offset_y))
-        
+
         return detections
-    
+
 
     def verify_object(self, raw_image, bboxes, velocity=0):
             """
@@ -195,7 +193,7 @@ class ModelInference:
             Returns:
             list of list of int: A list of adjusted bounding boxes that are within the shifted ROI.
             """
-            
+
             velocity = int(velocity)
             roi_x1,roi_y1,roi_x2,roi_y2 = self.get_roi_coordinates(image=raw_image)
             shifted_roi_x1 = roi_x1 - velocity
@@ -230,8 +228,8 @@ class ModelInference:
                     adjusted_bboxes.append([x1, y1, x2, y2])
 
             return adjusted_bboxes
-    
-    
+
+
     def draw_boxes(self, image: np.ndarray, bboxes: list, with_roi =True, with_roi_shift = True, velocity = 0) -> np.ndarray:
         """
         Given array of bounding box tuples and an image, draw the bouding boxes into the image. 
@@ -264,7 +262,7 @@ class ModelInference:
                 alpha = 0.5  # Transparency factor.
                 image = cv2.addWeighted(overlay, alpha, image, 1 - alpha, 0)
                 cv2.putText(image, 'Shifted ROI', (x1_shifted, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (100, 100, 100), 2)
-        
+
 
 
         color = tuple(np.random.randint(0, 256, 3).tolist())  # Generate a random color
@@ -275,10 +273,10 @@ class ModelInference:
 
             image = cv2.rectangle(image, (x1, y1), (x2, y2),(255, 0, 0), 2)
 
-        
+
 
         return image
-    
+
     def get_roi_coordinates(self, image:np.ndarray):
         """
         Calculate the coordinates of the Region of Interest (ROI) in the given image.
@@ -307,6 +305,6 @@ class ModelInference:
 
 
         return [top_left_x_coord,top_left_y_coord,bottom_right_x,bottom_right_y]
-    
+
     def print_info(self):
         print(self.yolo.info())

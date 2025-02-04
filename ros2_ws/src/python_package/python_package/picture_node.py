@@ -23,7 +23,7 @@ class PictureNode(Node):
         self.declare_parameter('static_image_path', '/home/user/ROS/assets/maize/IMG_1822_14.JPG')
         self.declare_parameter('loop', -1)  # 0 = don't loop, >0 = # of loops, -1 = loop forever
         self.declare_parameter('frame_rate', 1)  # Desired frame rate for publishing
-        
+
         self.static_image_path = self.get_parameter('static_image_path').get_parameter_value().string_value
         # Resolve the path programmatically
         if not os.path.isabs(self.static_image_path):
@@ -43,7 +43,7 @@ class PictureNode(Node):
         timer_period = 1/self.frame_rate  # publish every 0.5 seconds
         self.timer = self.create_timer(timer_period * 2, self.publish_static_image)
 
-           
+
     def get_images(self)-> list[np.ndarray]:
         """
         Returns a list of images in the form of cv images 
@@ -54,9 +54,9 @@ class PictureNode(Node):
         if not os.path.exists(self.static_image_path):
             self.get_logger().error(f"Static image not found at {self.static_image_path}")
             raise FileNotFoundError(f"Static image not found at {self.static_image_path}")
-        
+
         filename = self.static_image_path
-        
+
         image_paths = []
         if os.path.isfile(self.static_image_path) \
             and (filename.endswith('.JPG') or filename.endswith('.png')):
@@ -71,7 +71,7 @@ class PictureNode(Node):
         if len(image_paths) == 0:
             self.get_logger().error(f"No images found at {self.static_image_path}")
             return
-        
+
         images = []
         for filename in image_paths:
             # read images
@@ -79,13 +79,13 @@ class PictureNode(Node):
             if image is None:
                 self.get_logger().error(f"Failed to read image: {filename}")
                 raise FileNotFoundError(f"Failed to read image: {filename}")
-                        
+
             # add to the list of images
             images.append(image)
 
         return images
 
-    
+
     def publish_static_image(self):
         """
         Publishes static images to the /image topic
@@ -117,7 +117,7 @@ class PictureNode(Node):
             self.get_logger().info(f"Published image {self.image_counter}")
             self.image_counter += 1
             self.loop_count = self.image_counter // array_size
-            
+
         else:
             # stop the timer/quit the node
             self.timer.cancel()
@@ -136,7 +136,7 @@ def main(args=None):
     picture_node = PictureNode()
     executor = MultiThreadedExecutor(num_threads=1)
     executor.add_node(picture_node)
-    
+
     try:
         executor.spin()
     except KeyboardInterrupt:

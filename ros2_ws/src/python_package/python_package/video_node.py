@@ -15,7 +15,7 @@ from cv_bridge import CvBridge
 class VideoNode(Node):
     def __init__(self):
         super().__init__('video_node')
-        
+
         cuda.init()
         device = cuda.Device(0)
         self.cuda_driver_context = device.make_context()
@@ -28,7 +28,7 @@ class VideoNode(Node):
         self.declare_parameter('shift_constant', 1)
         self.declare_parameter('roi_dimensions', [0, 0, 100, 100])  
         self.declare_paramter('precision', 'fp32')      
-        
+
         self.video_path = self.get_parameter('video_path').get_parameter_value().string_value
         self.loop = self.get_parameter('loop').get_parameter_value().integer_value
         self.frame_rate = self.get_parameter('frame_rate').get_parameter_value().integer_value
@@ -39,7 +39,7 @@ class VideoNode(Node):
 
         self.pointer_publisher = self.create_publisher(String, 'preprocessing_done', 10)
         self.image_service = self.create_service(Image, 'image_data', self.image_callback)
-        
+
         self.velocity = [0, 0, 0]
         self.image_queue = queue.Queue()
         self.bridge = CvBridge()
@@ -51,13 +51,13 @@ class VideoNode(Node):
             pass
         else:
             self.get_logger().error(f"Invalid precision: {self.precision}")
-    
+
     def image_callback(self, response):
         self.get_logger().info("Received image request")
         if not self.image_queue.empty():
             image_data = self.image_queue.get()  # Get the image from the queue
             cv_image, velocity = image_data  # unpack tuple (image, velocity)
-            
+
             # Convert OpenCV image to ROS2 Image message using cv_bridge
             ros_image = self.bridge.cv2_to_imgmsg(cv_image, encoding='rgb8')
             # Create a new header and include velocity in the stamp fields
@@ -65,16 +65,16 @@ class VideoNode(Node):
             current_time = self.get_clock().now().to_msg()
             header.stamp = current_time  # Set timestamp to current time
             header.frame_id = str(velocity)  # Set frame ID to velocity
-            
+
             ros_image.header = header  # Attach the header to the ROS image message
             response.image = ros_image  # Set the response's image
             response.image = ros_image  # Set the response's image
             return response
-        
+
         else:
             self.get_logger().error("Image queue is empty")
             return response
-    
+
     def publish_video_frames(self):
         if not os.path.exists(self.video_path):
             self.get_logger().error(f"Video file not found at {self.video_path}")
@@ -84,7 +84,7 @@ class VideoNode(Node):
         if not cap.isOpened():
             self.get_logger().error(f"Failed to open video: {self.video_path}")
             return 
-        
+
         loops = 0
         while rclpy.ok() and (self.loop == -1 or loops < self.loop):
             while cap.isOpened() and rclpy.ok():
@@ -94,27 +94,27 @@ class VideoNode(Node):
                 self.image_queue.put((frame, self.velocity[0]))
                 self.preprocess_image(frame)
                 time.sleep(1.0 / self.frame_rate) 
-                
+
             if self.loop > 0:
                 loops += 1
-            
+
             if self.loop != -1:
                 cap.set(cv2.CAP_PROP_POS_FRAMES, 0) # restart video
         cap.release()
-    
+
     def preprocess_image(self, image):
         tic = time.perf_counter_ns()
-        
+
         roi_x, roi_y, roi_w, roi_h = self.roi_dimensions
         shifted_x = roi_x + abs(self.velocity[0]) * self.shift_constant
-        
+
         gpu_image = cv2.cuda_GpuMat()
         gpu_image.upload(image)                
-        
+
         gpu_image = cv2.cuda.cvtColor(gpu_image, cv2.COLOR_RGBA2RGB) # remove alpha channel
         gpu_image = gpu_image[roi_y:(roi_y+roi_h), shifted_x:(shifted_x+roi_w)] # crop the image to ROI
         gpu_image = cv2.cuda.resize(gpu_image, self.dimensions) # resize to model dimensions
-        
+
         input_data = cp.asarray(gpu_image)  # Now the image is on GPU memory as CuPy array
         input_data = input_data.astype(cp.float32) / 255.0 # normalize to [0, 1]
         input_data = cp.transpose(input_data, (2, 0, 1)) # Transpose from HWC (height, width, channels) to CHW (channels, height, width)
@@ -122,7 +122,7 @@ class VideoNode(Node):
 
         d_input_ptr = input_data.data.ptr  # Get device pointer of the CuPy array
         ipc_handle = cuda.mem_get_ipc_handle(d_input_ptr) # Create the IPC handle
-    
+
         toc = time.perf_counter_ns()
         self.get_logger().info(f"Preprocessing: {(toc-tic)/1e6} ms")
 
@@ -136,7 +136,7 @@ def main(args=None):
     video_node = VideoNode()
     executor = MultiThreadedExecutor(num_threads=1)
     executor.add_node(video_node)
-    
+
     try:
         executor.spin()
     finally:
