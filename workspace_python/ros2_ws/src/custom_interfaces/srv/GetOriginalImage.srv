@@ -1,4 +1,0 @@
-string image_id # to make sure the image is correctly received
----
-sensor_msgs/Image original_image
-float32 velocity
