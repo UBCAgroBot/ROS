@@ -1,5 +1,6 @@
 import time, os
 import cv2
+import serial
 # import pycuda.driver as cuda
 # from tracker import *
 # depth point cloud here...
@@ -23,7 +24,7 @@ from .scripts.utils import postprocess, draw_boxes
 class ExterminationNode(Node):
     def __init__(self):
         super().__init__('extermination_node')
-        
+    
         self.declare_parameter('use_display_node', True)
         # self.declare_parameter('lower_range', [78, 158, 124]) #todo: make this a parameter
         # self.declare_parameter('upper_range', [60, 255, 255])
@@ -49,11 +50,17 @@ class ExterminationNode(Node):
         #     if self.use_display_node:
         #         self.window = "Right Camera"
 
+        self.boxes_present = 0
         self.window = "Left Camera"
         self.bridge = CvBridge()
-        
+        # Open serial port to Arduino
+        self.ser = serial.Serial('/dev/ttyACM0', 115200, timeout=1)
         self.subscription = self.create_subscription(InferenceOutput, 'inference_out', self.inference_callback, 10)
 
+        # Create a timer that calls the listener_callback every second
+        self.timer = self.create_timer(1.0, self.timer_callback)
+
+        time.sleep(2)  # Wait for Arduino to reset
 
     def inference_callback(self, msg):
         preprocessed_image = self.bridge.imgmsg_to_cv2(msg.preprocessed_image, desired_encoding='passthrough')
@@ -72,10 +79,15 @@ class ExterminationNode(Node):
             cv2.waitKey(10)
 
         if len(bounding_boxes) > 0:
-            pass # return 1
+            self.boxes_present = 1
         else:
-            pass # return 0
+            self.boxes_present = 0
 
+    def timer_callback(self):
+        # Serialize and send the message to Arduino
+        serialized_msg = str(self.boxes_present) + '\n'  # Add a newline as a delimiter
+        self.ser.write(serialized_msg.encode())
+        self.get_logger().info(f'Sent to Arduino: {self.boxes_present}')
 
 def main(args=None):
     rclpy.init(args=args)

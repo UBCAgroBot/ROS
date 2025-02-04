@@ -1,0 +1,18 @@
+{
+    "name": "ML Dev Container (CPU)",
+    "remoteUser": "vscode",
+    "image": "agrobotappliedai/mlcontainers-cpu:latest",
+    "customizations":{
+        "settings": {
+            "terminal.integrated.shell.linux": "bash"
+        }
+    },
+    "workspaceFolder": "/home/vscode/workspace",
+    "workspaceMount": "source=.,target=/home/vscode/workspace,type=bind,consistency=cached",
+    "mounts": [],
+    "runArgs": [
+        "--net=host",
+        "-it"
+    ],
+    "postStartCommand": "nohup bash -c 'jupyter notebook --allow-root --no-browser --ip=0.0.0.0 --port=8888 --NotebookApp.token='' --NotebookApp.password='' --ServerApp.root_dir=/home/vscode/workspace > /home/vscode/workspace/jupyter.log 2>&1 &'"
+}

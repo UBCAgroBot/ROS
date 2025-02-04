@@ -1,0 +1,23 @@
+{
+    "name": "Jetson Development Container",
+    "remoteUser": "vscode",
+    "image": "agrobotappliedai/jetsoncontainers-dev:latest",
+    "customizations":{
+        "settings": {
+            "terminal.integrated.shell.linux": "bash"
+        }
+    },
+    "workspaceFolder": "/home/vscode/workspace",
+    "workspaceMount": "source=.,target=/home/vscode/workspace,type=bind,consistency=cached",
+    "mounts": [],
+    "runArgs": [
+        "--net=host",
+        "-it",
+        "--gpus=all",
+        "-e NVIDIA_DRIVER_CAPABILITIES=all",
+        "--ipc=host",
+        "--ulimit=memlock=-1",
+        "--ulimit=stack=67108864"
+    ],
+    "postStartCommand": "bash -c 'echo source /opt/ros/humble/setup.bash >> ~/.bashrc && source /opt/ros/humble/setup.bash'"
+}

@@ -253,3 +253,36 @@ output_torch_trt, torch_trt_time = comparison.infer_with_torch_trt()
 print(f"Torch2TRT Inference Time: {torch_trt_time:.6f} seconds")
 
 ## compare bounding box output to the expected from the file...
+
+# Warmup Phase:
+#     Each engine runs a warmup phase with 10 inference passes using random input. This ensures the timing reflects actual performance after the engine is "warmed up."
+# Buffer Allocation:
+#     For TensorRT-based models (trt_normal and trt_stripped), buffers for input and output tensors are allocated using CUDA. Host-pinned memory is allocated to enable efficient asynchronous execution.
+# Inference Timing:
+#     For each inference method (normal TensorRT, stripped TensorRT, and torch2trt), the inference time is measured after warmup. The random input is transferred to the device, and then the output is copied back to the host after inference.
+# Execution Context:
+#     Each TensorRT-based model (trt_normal, trt_stripped) uses an execution context created from the engine.
+# torch2trt:
+#     torch2trt models are loaded using TRTModule, and inference is performed using PyTorch tensors.
+
+# torch trt?
+import torch
+import torch_tensorrt as torch_trt
+
+# Sample PyTorch model (ResNet18 in this case)
+model = torch.hub.load('pytorch/vision:v0.10.0', 'resnet18', pretrained=True)
+model.eval().cuda()
+
+# Example input tensor
+input_data = torch.randn((1, 3, 224, 224)).cuda()
+
+# Convert the PyTorch model to a Torch-TensorRT optimized model
+trt_model = torch_trt.compile(model, 
+                              inputs=[torch_trt.Input(input_data.shape)], 
+                              enabled_precisions={torch.float, torch.half})  # Use FP32 and FP16
+
+# Run inference
+with torch.no_grad():
+    output = trt_model(input_data)
+
+print(output)
