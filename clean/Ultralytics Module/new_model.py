@@ -724,7 +724,7 @@ class Model(nn.Module):
             'path/to/exported/model.onnx'
         """
         self._check_is_pytorch_model()
-        from .exporter import Exporter
+        from .new_exporter import Exporter
 
         custom = {
             "imgsz": self.model.args["imgsz"],
