@@ -34,8 +34,6 @@ class InferenceNode(Node):
         self.bridge = CvBridge()
 
         self.image_subscription = self.create_subscription(ImageInput, f'{self.camera_side}_image_input', self.image_callback, 10)
-        
-        # create a publisher for the output image/boxes/extermination data
         self.box_publisher = self.create_publisher(InferenceOutput,f'{self.camera_side}_inference_output', 10) 
     
     def image_callback(self, msg):
@@ -60,7 +58,7 @@ class InferenceNode(Node):
             output_msg.bounding_boxes = bounding_boxes
             output_msg.confidences = confidences_msg
         self.box_publisher.publish(output_msg)
-
+        
         self.get_logger().info(f"Inference: {(toc-tic)/1e6} ms")
 
 def main(args=None):
