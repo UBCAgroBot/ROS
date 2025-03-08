@@ -21,8 +21,8 @@ class PictureNode(Node):
     def __init__(self):
         super().__init__('picture_node')
 
-        self.declare_parameter('static_image_path', '/home/usr/Desktop/ROS/assets/IMG_1822_14.JPG')
-        self.declare_parameter('loop', 0)  # 0 = don't loop, >0 = # of loops, -1 = loop forever
+        self.declare_parameter('static_image_path', '/home/user/ROS/assets/maize/IMG_1822_14.JPG')
+        self.declare_parameter('loop', -1)  # 0 = don't loop, >0 = # of loops, -1 = loop forever
         self.declare_parameter('frame_rate', 1)  # Desired frame rate for publishing
         self.declare_parameter('camera_side', 'left')
         
@@ -138,6 +138,9 @@ def main(args=None):
     
     try:
         executor.spin()
+    except KeyboardInterrupt:
+        print("Shutting down picture node")
+        return
     finally:
         executor.shutdown()
         picture_node.destroy_node()

@@ -11,71 +11,74 @@ import numpy as np
 import rclpy
 from rclpy.time import Time
 from rclpy.node import Node
-# from std_msgs.msg import Header, String, Integer
 from rclpy.executors import MultiThreadedExecutor
-from sensor_msgs.msg import Image
-from custom_interfaces.msg import InferenceOutput                            # CHANGE
-from .scripts.utils import postprocess, draw_boxes
 
-# cuda.init()
-# device = cuda.Device(0)
-# cuda_driver_context = device.make_context()
+from sensor_msgs.msg import Image
+from std_msgs.msg import Int8
+from custom_interfaces.msg import InferenceOutput
+from custom_interfaces.srv import GetRowPlantCount
+
+from .scripts.utils import postprocess, draw_boxes
+from .scripts.tracker import EuclideanDistTracker
 
 class ExterminationNode(Node):
     def __init__(self):
         super().__init__('extermination_node')
     
         self.declare_parameter('use_display_node', True)
-        # self.declare_parameter('lower_range', [78, 158, 124]) #todo: make this a parameter
-        # self.declare_parameter('upper_range', [60, 255, 255])
-        # self.declare_parameter('min_area', 100)
-        # self.declare_parameter('min_confidence', 0.5)
-        # self.declare_parameter('roi_list', [0,0,100,100])
-        # self.declare_parameter('publish_rate', 10)
-        # self.declare_parameter('side', 'left')
-        
+        self.declare_parameter('camera_side', 'left')
+
         self.use_display_node = self.get_parameter('use_display_node').get_parameter_value().bool_value
-        # self.lower_range = self.get_parameter('lower_range').get_parameter_value().integer_array_value
-        # self.upper_range = self.get_parameter('upper_range').get_parameter_value().integer_array_value
-        # self.min_area = self.get_parameter('min_area').get_parameter_value().integer_value
-        # self.min_confidence = self.get_parameter('min_confidence').get_parameter_value().double_value
-        # self.roi_list = self.get_parameter('roi_list').get_parameter_value().integer_array_value
-        # self.publish_rate = self.get_parameter('publishsource install/setup.bash
-        # if self.side == "left":
-        #     side_topic = 'left_array_data'
-        #     if self.use_display_node:
-        #         self.window = "Left Camera"
-        # else:
-        #     side_topic = 'right_array_data'
-        #     if self.use_display_node:
-        #         self.window = "Right Camera"
+        self.camera_side = self.get_parameter('camera_side').get_parameter_value().string_value
+        self.window = "Left Camera" if self.camera_side == "left" else "Right Camera" if self.use_display_node else None
 
+        self.publishing_rate = 1.0
+        self.lower_range = [78, 158, 124]
+        self.upper_range = [60, 255, 255]
+        self.minimum_area = 100
+        self.minimum_confidence = 0.5
+        
         self.boxes_present = 0
-        self.window = "Left Camera"
+        self.tracker = EuclideanDistTracker() #value sent to arduino
         self.bridge = CvBridge()
-        # Open serial port to Arduino
-        self.ser = serial.Serial('/dev/ttyACM0', 115200, timeout=1)
-        self.subscription = self.create_subscription(InferenceOutput, 'inference_out', self.inference_callback, 10)
+        self.boxes_msg = Int8()
+        self.boxes_msg.data = 0
 
-        # Create a timer that calls the listener_callback every second
-        self.timer = self.create_timer(1.0, self.timer_callback)
+        self.inference_subscription = self.create_subscription(InferenceOutput, f'{self.camera_side}_inference_output', self.inference_callback, 10)
+        self.box_publisher = self.create_publisher(Int8, f'{self.camera_side}_extermination_output', 10)
+        self.timer = self.create_timer(self.publishing_rate, self.timer_callback)
 
-        time.sleep(2)  # Wait for Arduino to reset
+        self.get_tracker_row_count_service = self.create_service(GetRowPlantCount, 'reset_tracker', self.get_tracker_row_count_callback)
+
+
+    def get_tracker_row_count_callback(self,request,response):
+        """
+        When navigation requests this service, reset the tracker count so that it knows to start a new row. 
+        return the tracker's current row count
+        """
+        row_count = self.tracker.reset()
+        response.row_count = row_count
+        return response
 
     def inference_callback(self, msg):
+        # self.get_logger().info("Received Bounding Boxes")
+
         preprocessed_image = self.bridge.imgmsg_to_cv2(msg.preprocessed_image, desired_encoding='passthrough')
         raw_image = self.bridge.imgmsg_to_cv2(msg.raw_image, desired_encoding='passthrough')
 
         confidence = np.reshape(msg.confidences.data, (-1))
         bboxes = np.reshape(msg.bounding_boxes.data, (-1,4))
-
-        bounding_boxes = postprocess(confidence,bboxes, raw_image,msg.velocity)
         
+        bounding_boxes = postprocess(confidence,bboxes, raw_image,msg.velocity)
+
+
         final_image = draw_boxes(raw_image,bounding_boxes,velocity=msg.velocity)
 
+        self.tracker.update(bounding_boxes)
+
         if self.use_display_node:
-        # Create a CUDA window and display the cv_image
-            cv2.imshow('CUDA Window', final_image)
+            # Create a CUDA window and display the cv_image
+            cv2.imshow(self.window, final_image)
             cv2.waitKey(10)
 
         if len(bounding_boxes) > 0:
@@ -83,11 +86,13 @@ class ExterminationNode(Node):
         else:
             self.boxes_present = 0
 
+        self.boxes_msg = Int8()
+        self.boxes_msg.data = self.boxes_present
+        
     def timer_callback(self):
-        # Serialize and send the message to Arduino
-        serialized_msg = str(self.boxes_present) + '\n'  # Add a newline as a delimiter
-        self.ser.write(serialized_msg.encode())
-        self.get_logger().info(f'Sent to Arduino: {self.boxes_present}')
+        #send msg to arduino
+        self.box_publisher.publish(self.boxes_msg)
+        self.get_logger().info("Published results to Proxy Node")
 
 def main(args=None):
     rclpy.init(args=args)
@@ -96,6 +101,8 @@ def main(args=None):
     executor.add_node(extermination_node)
     try:
         executor.spin()
+    except KeyboardInterrupt:
+        print("Shutting down extermination node")
     finally:
         executor.shutdown()
         extermination_node.destroy_node()
