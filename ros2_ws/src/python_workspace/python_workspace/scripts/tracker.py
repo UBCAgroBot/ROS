@@ -2,6 +2,21 @@ import math
 THRESHOLD = 200
 
 class EuclideanDistTracker:
+    """
+    source: https://www.analyticsvidhya.com/blog/2022/05/a-tutorial-on-centroid-tracker-counter-system/
+    Object tracking using euclidean distance. TLDR: 
+    - keep list of obj center points from the previous frame
+    - compare the center points of the current frame to the previous frame
+    - if the distance between the center points is less than a threshold, then it is the same object
+    - if the distance is greater than the threshold, then it is a new object
+
+    Current issues/limitations: 
+    - Need to define our own threshold value, which is somewhat dependant on the bot speed and camera frame rate
+    - Dependent on proper object detection - if the obj detection fails the previous frame, 
+        the tracker will see everything as a new object
+    - If two detections are close to each other, tracker will assign them the same object ID.
+        A "fix" right now is to keep track of previous IDs that we "used", so we don't assign them again.
+    """
     
     def __init__(self, threshold=THRESHOLD):
         # Store the center positions of the objects
@@ -24,6 +39,7 @@ class EuclideanDistTracker:
         # Objects boxes and ids
         objects_bbs_ids = []
         new_obj = 0
+        centers = self.center_points.copy()
 
         # Get center point of new object
         for rect in objects_rect:
@@ -33,13 +49,13 @@ class EuclideanDistTracker:
 
             # Find out if that object was detected already
             same_object_detected = False
-            for item_id, pt in self.center_points.items():
+            for item_id, pt in centers.items():
                 dist = math.hypot(cx - pt[0], cy - pt[1])
-
                 if dist < self.threshold:
                     self.center_points[item_id] = (cx, cy)
                     objects_bbs_ids.append([x1, y1, x2, y2, item_id])
                     same_object_detected = True
+                    centers.pop(item_id)
                     break
 
             

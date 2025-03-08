@@ -140,6 +140,7 @@ class ModelInference:
 
 
         detections = self.object_filter(raw_image, detections) #color segmentation
+        #TODO: NMS
         detections = self.verify_object(raw_image, detections,velocity)
 
         return detections
@@ -283,11 +284,10 @@ class ModelInference:
         for bbox in bboxes:
             x1, y1, x2, y2, label = map(int, bbox)
 
-            # print(f"Bounding box: ({x1}, {y1}), ({x2}, {y2})")
 
             image = cv2.rectangle(image, (x1, y1), (x2, y2), (255, 0, 0), 2)
             label = f"Object {label}"
-            cv2.putText(image, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 0, 0), 3, cv2.LINE_AA)
+            cv2.putText(image, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
 
         return self.resize_with_padding(image)
 
