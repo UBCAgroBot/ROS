@@ -1,12 +1,15 @@
 import math
+THRESHOLD = 200
 
 class EuclideanDistTracker:
-    def __init__(self):
+    
+    def __init__(self, threshold=THRESHOLD):
         # Store the center positions of the objects
         self.center_points = {}
         # Keep the count of the IDs
         # each time a new object id detected, the count will increase by one
         self.id_count = 0
+        self.threshold = threshold
 
     def reset(self):
         """ resets the count and also returns val of curr row
@@ -20,7 +23,7 @@ class EuclideanDistTracker:
     def update(self, objects_rect):
         # Objects boxes and ids
         objects_bbs_ids = []
-        # new_obj = 0
+        new_obj = 0
 
         # Get center point of new object
         for rect in objects_rect:
@@ -33,7 +36,7 @@ class EuclideanDistTracker:
             for item_id, pt in self.center_points.items():
                 dist = math.hypot(cx - pt[0], cy - pt[1])
 
-                if dist < 25:
+                if dist < self.threshold:
                     self.center_points[item_id] = (cx, cy)
                     objects_bbs_ids.append([x1, y1, x2, y2, item_id])
                     same_object_detected = True

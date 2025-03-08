@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.10)
 project(custom_interfaces)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -17,6 +17,7 @@ find_package(sensor_msgs REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ImageInput.msg"
   "msg/InferenceOutput.msg"
+  "msg/ExterminationOutputLogger.msg"
   "srv/GetRowPlantCount.srv"
   DEPENDENCIES sensor_msgs
 

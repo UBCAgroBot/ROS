@@ -33,7 +33,6 @@ class InferenceNode(Node):
         self.box_publisher = self.create_publisher(InferenceOutput,f'{self.camera_side}_inference_output', 10)
     
     def image_callback(self, msg):
-        self.get_logger().info("Received Image")
         opencv_img = self.bridge.imgmsg_to_cv2(msg.preprocessed_image, desired_encoding='passthrough')
         tic = time.perf_counter_ns()
         output_img, confidences, boxes = self.model.inference(opencv_img)

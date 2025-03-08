@@ -20,7 +20,7 @@ class ExterminationNode(Node):
         
         self.get_logger().info("Initializing Extermination Node")
         
-        self.declare_parameter('use_display_node', True)
+        self.declare_parameter('use_display_node', False)
         self.declare_parameter('camera_side', 'left')
         self.use_display_node = self.get_parameter('use_display_node').get_parameter_value().bool_value
         self.camera_side = self.get_parameter('camera_side').get_parameter_value().string_value
@@ -61,9 +61,11 @@ class ExterminationNode(Node):
         preprocessed_image = self.bridge.imgmsg_to_cv2(msg.preprocessed_image, desired_encoding='passthrough') # what is this needed for?
         raw_image = self.bridge.imgmsg_to_cv2(msg.raw_image, desired_encoding='passthrough')
         bounding_boxes = self.model.postprocess(msg.confidences.data,msg.bounding_boxes.data, raw_image,msg.velocity)
-        final_image = self.model.draw_boxes(raw_image,bounding_boxes,velocity=msg.velocity)
 
-        self.tracker.update(bounding_boxes)
+        bbox_with_label = self.tracker.update(bounding_boxes)
+
+        final_image = self.model.draw_boxes(raw_image,bbox_with_label,velocity=msg.velocity)
+
 
         if self.use_display_node:
             cv2.imshow(self.window, final_image)
