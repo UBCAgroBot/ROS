@@ -24,7 +24,7 @@ class PictureNode(Node):
         self.declare_parameter('static_image_path', '/home/usr/Desktop/ROS/assets/IMG_1822_14.JPG')
         self.declare_parameter('loop', 0)  # 0 = don't loop, >0 = # of loops, -1 = loop forever
         self.declare_parameter('frame_rate', 1)  # Desired frame rate for publishing
-
+        self.declare_parameter('camera_side', 'left')
         
         self.static_image_path = self.get_parameter('static_image_path').get_parameter_value().string_value
         # Resolve the path programmatically
@@ -33,6 +33,7 @@ class PictureNode(Node):
 
         self.loop = self.get_parameter('loop').get_parameter_value().integer_value
         self.frame_rate = self.get_parameter('frame_rate').get_parameter_value().integer_value
+        self.camera_side = self.get_parameter('camera_side').get_parameter_value().string_value
 
         self.bridge = CvBridge()
 
@@ -40,8 +41,7 @@ class PictureNode(Node):
         self.loop_count = 0
         self.image_counter = 0
 
-
-        self.input_image_publisher = self.create_publisher(ImageInput, 'input_image', 10)
+        self.input_image_publisher = self.create_publisher(ImageInput, f'{self.camera_side}_image_input', 10)
         timer_period = 1/self.frame_rate  # publish every 0.5 seconds
         self.timer = self.create_timer(timer_period * 2, self.publish_static_image)
 

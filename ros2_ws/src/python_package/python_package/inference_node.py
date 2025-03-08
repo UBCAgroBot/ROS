@@ -7,6 +7,7 @@ from cv_bridge import CvBridge
 
 from sensor_msgs.msg import Image
 from std_msgs.msg import Float32MultiArray
+from rclpy.executors import MultiThreadedExecutor
 
 from custom_interfaces.msg import ImageInput, InferenceOutput
 from .scripts.utils import initialise_model, run_inference
