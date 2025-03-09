@@ -8,7 +8,7 @@ This is a ROS2 workspace for Python-based implementation.
 
 ## package list
 - `custom_interface`: This package contains custom message and service definitions for interfacing with other ROS2 nodes.
-- `python_workspace`: This package handles all camera inference, post-processing, and output functionalities.
+- `python_package`: This package handles all camera inference, post-processing, and output functionalities.
 
 For more detailed information regarding each node, please refer to the README file located in each package directory. These files contain specific instructions on parameters, usage examples, and other relevant details.
 
@@ -41,25 +41,25 @@ To set up and run this workspace, you have several options:
     rosdep install --from-paths src --ignore-src -r -y
 
     # Build the workspace
-    colcon build --symlink-install
+    colcon build --symlink-install --packages-select custom_interface python_package
 
     # why --symlink install: https://answers.ros.org/question/371822/what-is-the-use-of-symlink-install-in-ros2-colcon-build/
     ```
 4. Run the `picture_node`:
     ```bash
     source install/setup.bash
-    ros2 run python_workspace picture_node --ros-args -p static_image_path:=$IMAGE_FOLDER_PATH -p frame_rate:=1
+    ros2 run python_package picture_node --ros-args -p static_image_path:=$IMAGE_FOLDER_PATH -p frame_rate:=1
     ```
 5. Run the `inference_node` in a new terminal:
     ```bash
     MODEL_WEIGHT_PATH=/home/user/ROS/models/maize/Maize.pt
     source install/setup.bash
-    ros2 run python_workspace inference_node --ros-args -p weights_path:=$MODEL_WEIGHT_PATH
+    ros2 run python_package inference_node --ros-args -p weights_path:=$MODEL_WEIGHT_PATH
     ```
 6. Run the `extermination_node` in a new terminal:
     ```bash
     source install/setup.bash
-    ros2 run python_workspace extermination_node
+    ros2 run python_package extermination_node
     ```
 
 
@@ -85,7 +85,7 @@ echo "source /opt/ros/humbe/setup.bash" >> ~/.bashrc
 #### CV/CUDA error when running the extermination node. 
 This node defaults to using cv to display the output. Depending on how you decided to run this (container, ssh, etc) this error might occur because it can't create a display window. To prevent this error simply turn the display off by adding the argument `--ros-args -p use_display_node:=false` to the command.
 ```bash 
-ros2 run python_workspace extermination_node --ros-args -p use_display_node:=false
+ros2 run python_package extermination_node --ros-args -p use_display_node:=false
 ```
 ## License
 

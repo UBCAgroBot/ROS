@@ -1,5 +1,5 @@
 
-# python_workspace package
+# python_package package
 This package contains nodes that gets image data, runs inference on them and also converts it into output needed for the extermination team. 
 
 ## Node list 
@@ -8,9 +8,9 @@ This package contains nodes that gets image data, runs inference on them and als
 
 | Node Type         | Description | Subscribes To | Publishes To                      | Example command |
 |-------------------|-------------|---------------|-----------------------------------|-----------------|
-| Picture Node      | Captures and processes static images | -             | `/input_image`        | `ros2 run python_workspace picture_node --ros-args -p static_image_path:='./../assets/maize' -p frame_rate:=1`|
-| Inference Node    | Runs inference on input images | `/input_image`  | - `/inference_out` <br> - `/output_img` | `ros2 run python_workspace inference_node --ros-args -p weights_path:='../models/maize/Maize.pt'`|
-| Extermination Node| Processes inference results, displays and sends binary output for exttermination team | `/inference_out` | external binary        | `ros2 run python_workspace extermination_node`|
+| Picture Node      | Captures and processes static images | -             | `/input_image`        | `ros2 run python_package picture_node --ros-args -p static_image_path:='./../assets/maize' -p frame_rate:=1`|
+| Inference Node    | Runs inference on input images | `/input_image`  | - `/inference_out` <br> - `/output_img` | `ros2 run python_package inference_node --ros-args -p weights_path:='../models/maize/Maize.pt'`|
+| Extermination Node| Processes inference results, displays and sends binary output for exttermination team | `/inference_out` | external binary        | `ros2 run python_package extermination_node`|
 
 
 
@@ -39,7 +39,7 @@ Other nodes are still a WIP
 ## Additional information
 ### Compiling new Changes
 ```bash
-colcon build --packages-select custom_interface python_workspace #not needed if the initial build uses  --symlink-install
+colcon build --symlink-install --packages-select custom_interface python_package
 source install/setup.bash
 ```
 
