@@ -28,11 +28,11 @@ def initialise_model(weights_path=None, precision=None):
     yolo = YOLO(weights_path)
     return yolo
 
-def resize_with_padding(self,image: np.ndarray):
+def _resize_with_padding(image: np.ndarray):
     """
     Resize the image to the desired shape and pad the image with a constant color.
     """
-    new_shape = self.POSTPROCESS_OUTPUT_SHAPE
+    new_shape = POSTPROCESS_OUTPUT_SHAPE
     padding_color = (0, 255, 255)
     original_shape = (image.shape[1], image.shape[0])
     ratio = float(max(new_shape))/max(original_shape)
@@ -101,8 +101,8 @@ def postprocess(confidence, bbox_array: np.ndarray,raw_image: np.ndarray, veloci
     """
     
     detections = _convert_bboxes_to_pixel(bbox_array, raw_image.shape)
-    detections = _object_filter(raw_image, detections) #color segmentation
-    detections = _verify_object(raw_image, detections,velocity)
+    # detections = _object_filter(raw_image, detections) #color segmentation
+    # detections = _verify_object(raw_image, detections,velocity)
 
     return detections
 
@@ -204,7 +204,7 @@ def _verify_object(raw_image, bboxes, velocity=0):
         return adjusted_bboxes
 
 
-def draw_boxes(image: np.ndarray, bboxes: list, with_roi =True, with_roi_shift = True, velocity = 0) -> np.ndarray:
+def draw_boxes(image: np.ndarray, bboxes: list, with_roi =False, with_roi_shift = False, velocity = 0) -> np.ndarray:
     """
     Given array of bounding box tuples and an image, draw the bounding boxes into the image. 
     If with_roi and with_roi shift is set to true, the ROI areas will also be drawn in. 
@@ -247,6 +247,8 @@ def draw_boxes(image: np.ndarray, bboxes: list, with_roi =True, with_roi_shift =
         label = f"Object {label}"
         cv2.putText(image, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
 
+    
+    image = _resize_with_padding(image)
 
     return image
 

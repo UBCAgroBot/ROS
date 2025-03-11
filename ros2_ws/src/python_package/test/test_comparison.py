@@ -5,9 +5,9 @@ import torch
 import cupy as cp
 import time
 from pathlib import Path
-from python_workspace.scripts.utils import ModelInference
-from python_workspace.scripts.utils_cupy import ModelInferenceCupy
-from python_workspace.scripts.utils_pytorch import ModelInferencePytorch
+from python_package.scripts.utils import ModelInference
+from python_package.scripts.utils_cupy import ModelInferenceCupy
+from python_package.scripts.utils_pytorch import ModelInferencePytorch
 
 class TestPreprocessingMethods(unittest.TestCase):
     @classmethod

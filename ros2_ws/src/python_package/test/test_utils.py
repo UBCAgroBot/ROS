@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 import os
 from pathlib import Path
-from python_workspace.scripts.utils import ModelInference
+from python_package.scripts.utils import ModelInference
 
 class TestModelInference(unittest.TestCase):
     @classmethod
@@ -124,4 +124,4 @@ class TestModelInference(unittest.TestCase):
 if __name__ == '__main__':
     unittest.main()
 
-# python3 workspace_python/ros2_ws/src/python_workspace/test/test_utils.py
+# python3 workspace_python/ros2_ws/src/python_package/test/test_utils.py
