@@ -8,7 +8,7 @@ from rclpy.executors import MultiThreadedExecutor
 from std_msgs.msg import Header
 from cv_bridge import CvBridge
 
-from .scripts.utils import ModelInference
+from .scripts.utils import preprocess
 from custom_interfaces.msg import ImageInput                            # CHANGE
 # node to publish static image data to the /image topic. 
 # used for testing the inference pipelines.
@@ -31,7 +31,6 @@ class VideoNode(Node):
         self.frame_rate = self.get_parameter('frame_rate').get_parameter_value().integer_value
 
         self.bridge = CvBridge()
-        self.model = ModelInference()
 
         self.loop_count = 0
         self.image_counter = 0
@@ -63,7 +62,7 @@ class VideoNode(Node):
                 image_input = ImageInput()
                 
                 raw_image = image
-                postprocessed_img = self.model.preprocess(raw_image)
+                postprocessed_img = preprocess(raw_image)
                 postprocessed_img_msg = self.bridge.cv2_to_imgmsg(postprocessed_img, encoding='rgb8')
                 raw_img_msg = self.bridge.cv2_to_imgmsg(raw_image, encoding='rgb8')
 
