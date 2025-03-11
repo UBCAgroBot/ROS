@@ -11,7 +11,7 @@ def load_model(model_path):
         raise ValueError("Model path should end with .onnx")
     else:
         logging.info(f"ONNX model loaded successfully")
-        return onnx.load(model_path)
+        return onnx.load(model_path).SerializeToString()
 
 def load_engine(engine_path):
     if not os.path.exists(engine_path):

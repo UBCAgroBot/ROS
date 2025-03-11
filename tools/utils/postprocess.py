@@ -62,6 +62,7 @@ def main(onnx_model, input_image):
 
     # Preprocess the image and prepare blob for model
     blob = cv2.dnn.blobFromImage(image, scalefactor=1 / 255, size=(640, 640), swapRB=True)
+    print(blob)
     model.setInput(blob)
 
     # Perform inference
@@ -123,89 +124,3 @@ def main(onnx_model, input_image):
     cv2.destroyAllWindows()
 
     return detections
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--model", default="yolov8n.onnx", help="Input your ONNX model.")
-    parser.add_argument("--img", default=str(ASSETS / "bus.jpg"), help="Path to input image.")
-    args = parser.parse_args()
-    main(args.model, args.img)
-
-    def post_process(self, output, original_image, scales, conf_threshold=0.5, iou_threshold=0.4):
-        """
-        Post-process the model output to extract bounding boxes, confidence, and class scores.
-        Rescale the boxes back to the original image size.
-        :param output: Raw output from the model.
-        :param original_image: Original image for drawing bounding boxes.
-        :param scales: Scaling factors to map the boxes back to original size.
-        :param conf_threshold: Confidence score threshold for filtering detections.
-        :param iou_threshold: IOU threshold for non-maximum suppression (NMS).
-        :return: Image with annotated bounding boxes.
-        """
-        scale_x, scale_y = scales
-        boxes = output[0]
-        filtered_boxes = []
-
-        # Iterate over boxes and filter by confidence
-        for box in boxes:
-            x1, y1, x2, y2, score, class_id = box
-            if score >= conf_threshold:
-                # Rescale box coordinates to the original image size
-                x1 *= scale_x
-                x2 *= scale_x
-                y1 *= scale_y
-                y2 *= scale_y
-                filtered_boxes.append([x1, y1, x2, y2, score, class_id])
-
-        # Apply Non-Maximum Suppression (NMS)
-        filtered_boxes = self.nms(filtered_boxes, iou_threshold)
-
-        # Annotate the image with bounding boxes
-        for (x1, y1, x2, y2, score, class_id) in filtered_boxes:
-            # Draw bounding box
-            cv2.rectangle(original_image, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
-            # Put label and score
-            label = f"Class {int(class_id)}: {score:.2f}"
-            cv2.putText(original_image, label, (int(x1), int(y1)-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
-
-        return original_image, filtered_boxes
-
-    def nms(self, boxes, iou_threshold):
-        """
-        Perform Non-Maximum Suppression (NMS) on the bounding boxes.
-        :param boxes: List of boxes in the format [x1, y1, x2, y2, score, class_id].
-        :param iou_threshold: Intersection-over-Union threshold for filtering overlapping boxes.
-        :return: Filtered list of bounding boxes after NMS.
-        """
-        if len(boxes) == 0:
-            return []
-        
-        boxes = sorted(boxes, key=lambda x: x[4], reverse=True)  # Sort by confidence score
-        
-        keep_boxes = []
-        while boxes:
-            chosen_box = boxes.pop(0)
-            keep_boxes.append(chosen_box)
-            boxes = [box for box in boxes if self.iou(chosen_box, box) < iou_threshold]
-        
-        return keep_boxes
-
-    def iou(self, box1, box2):
-        """
-        Calculate Intersection over Union (IoU) between two boxes.
-        :param box1: First box in the format [x1, y1, x2, y2, score, class_id].
-        :param box2: Second box in the same format.
-        :return: IoU score.
-        """
-        x1 = max(box1[0], box2[0])
-        y1 = max(box1[1], box2[1])
-        x2 = min(box1[2], box2[2])
-        y2 = min(box1[3], box2[3])
-
-        inter_area = max(0, x2 - x1) * max(0, y2 - y1)
-        box1_area = (box1[2] - box1[0]) * (box1[3] - box1[1])
-        box2_area = (box2[2] - box2[0]) * (box2[3] - box2[1])
-        union_area = box1_area + box2_area - inter_area
-        
-        return inter_area / union_area
