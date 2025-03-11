@@ -1,6 +1,4 @@
-import time, os
 import cv2
-import serial
 # import pycuda.driver as cuda
 # from tracker import *
 # depth point cloud here...
@@ -25,7 +23,7 @@ class ExterminationNode(Node):
     def __init__(self):
         super().__init__('extermination_node')
     
-        self.declare_parameter('use_display_node', True)
+        self.declare_parameter('use_display_node', False)
         self.declare_parameter('camera_side', 'left')
 
         self.use_display_node = self.get_parameter('use_display_node').get_parameter_value().bool_value
@@ -39,7 +37,7 @@ class ExterminationNode(Node):
         self.minimum_confidence = 0.5
         
         self.boxes_present = 0
-        self.tracker = EuclideanDistTracker() #value sent to arduino
+        self.tracker = EuclideanDistTracker()
         self.bridge = CvBridge()
         self.boxes_msg = Int8()
         self.boxes_msg.data = 0
@@ -57,7 +55,7 @@ class ExterminationNode(Node):
         return the tracker's current row count
         """
         row_count = self.tracker.reset()
-        response.row_count = row_count
+        response.plant_count = row_count
         return response
 
     def inference_callback(self, msg):
@@ -71,13 +69,12 @@ class ExterminationNode(Node):
         
         bounding_boxes = postprocess(confidence,bboxes, raw_image,msg.velocity)
 
+        bbox_with_label = self.tracker.update(bounding_boxes)
 
-        final_image = draw_boxes(raw_image,bounding_boxes,velocity=msg.velocity)
+        final_image = draw_boxes(raw_image,bbox_with_label,velocity=msg.velocity)
 
-        self.tracker.update(bounding_boxes)
 
         if self.use_display_node:
-            # Create a CUDA window and display the cv_image
             cv2.imshow(self.window, final_image)
             cv2.waitKey(10)
 
@@ -90,7 +87,6 @@ class ExterminationNode(Node):
         self.boxes_msg.data = self.boxes_present
         
     def timer_callback(self):
-        #send msg to arduino
         self.box_publisher.publish(self.boxes_msg)
         self.get_logger().info("Published results to Proxy Node")
 
