@@ -26,7 +26,8 @@ setup(
             'inference_node = python_package.inference_node:main',
             'extermination_node = python_package.extermination_node:main',
             'proxy_node = python_package.proxy_node:main',
-            'picture_node = python_package.picture_node:main' # remove later
+            'picture_node = python_package.picture_node:main', #remove later
+            'video_node = python_package.video_node:main'
         ],
     },
 

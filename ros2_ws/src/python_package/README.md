@@ -39,7 +39,7 @@ Other nodes are still a WIP
 ## Additional information
 ### Compiling new Changes
 ```bash
-colcon build --symlink-install --packages-select custom_interface python_package
+colcon build --symlink-install --packages-select custom_interfaces python_package
 source install/setup.bash
 ```
 

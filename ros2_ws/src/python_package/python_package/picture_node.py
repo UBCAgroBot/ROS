@@ -1,4 +1,4 @@
-import time, os
+import os
 import cv2
 import random
 import rclpy
@@ -6,7 +6,7 @@ from rclpy.time import Time
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 from sensor_msgs.msg import Image
-from std_msgs.msg import Header, String
+from std_msgs.msg import Header
 from cv_bridge import CvBridge
 import queue
 import numpy as np
@@ -56,6 +56,8 @@ class PictureNode(Node):
         if not os.path.exists(self.static_image_path):
             self.get_logger().error(f"Static image not found at {self.static_image_path}")
             raise FileNotFoundError(f"Static image not found at {self.static_image_path}")
+        
+        filename = self.static_image_path
         
         image_paths = []
         if os.path.isfile(self.static_image_path) \
@@ -114,7 +116,7 @@ class PictureNode(Node):
 
             # publish image and increment whatever is needed
             self.input_image_publisher.publish(image_input)
-
+            self.get_logger().info(f"Published image {self.image_counter}")
             self.image_counter += 1
             self.loop_count = self.image_counter // array_size
         else:

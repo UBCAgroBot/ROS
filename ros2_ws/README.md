@@ -29,7 +29,7 @@ To set up and run this workspace, you have several options:
 ### With sample images
 > **Warning:** The paths mentioned in the instructions are absolute paths based on the Jetson's directory. These arguments can be changed to be relative to your current directory. 
 
-1. Navigate to the `/ROS/workspace_python/ros2_ws` directory.
+1. Navigate to the `/ROS/ros2_ws` directory.
 2. Create temporary variables to store the paths values:
     ```bash
     IMAGE_FOLDER_PATH=/home/user/ROS/assets/maize
@@ -41,28 +41,41 @@ To set up and run this workspace, you have several options:
     rosdep install --from-paths src --ignore-src -r -y
 
     # Build the workspace
-    colcon build --symlink-install --packages-select custom_interface python_package
+    colcon build --symlink-install --packages-select custom_interfaces python_package 
 
     # why --symlink install: https://answers.ros.org/question/371822/what-is-the-use-of-symlink-install-in-ros2-colcon-build/
     ```
-4. Run the `picture_node`:
+4. Run the `picture_node` or `video_node`:
     ```bash
     source install/setup.bash
     ros2 run python_package picture_node --ros-args -p static_image_path:=$IMAGE_FOLDER_PATH -p frame_rate:=1
+    ```
+
+    For video node, run: 
+    ```
+    VIDEO_PATH=write/path/here
+    ros2 run python_package video_node --ros-args -p static_image_path:=$VIDEO_PATH -p frame_rate:=10
     ```
 5. Run the `inference_node` in a new terminal:
     ```bash
     MODEL_WEIGHT_PATH=/home/user/ROS/models/maize/Maize.pt
     source install/setup.bash
-    ros2 run python_package inference_node --ros-args -p weights_path:=$MODEL_WEIGHT_PATH
+    ros2 run python_package inference_node --ros-args -p weights_path:=$MODEL_WEIGHT_PATH 
     ```
 6. Run the `extermination_node` in a new terminal:
     ```bash
     source install/setup.bash
-    ros2 run python_package extermination_node
+    ros2 run python_package extermination_node --ros-args -p use_display_node:=False
     ```
 
 
+### Getting the plant count using the service
+#### Prerequisites:
+- Extermination node must be active
+```bash
+source install/setup.bash
+ros2 service call /reset_tracker custom_interfaces/srv/GetRowPlantCount "{}"
+```
 ## Common trouble shooting
 Some common troubleshooting steps include:
 

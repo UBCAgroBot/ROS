@@ -28,8 +28,24 @@ def initialise_model(weights_path=None, precision=None):
     yolo = YOLO(weights_path)
     return yolo
 
+def _resize_with_padding(image: np.ndarray):
+    """
+    Resize the image to the desired shape and pad the image with a constant color.
+    """
+    new_shape = POSTPROCESS_OUTPUT_SHAPE
+    padding_color = (0, 255, 255)
+    original_shape = (image.shape[1], image.shape[0])
+    ratio = float(max(new_shape))/max(original_shape)
+    new_size = tuple([int(x*ratio) for x in original_shape])
+    image = cv2.resize(image, new_size)
+    delta_w = new_shape[0] - new_size[0]
+    delta_h = new_shape[1] - new_size[1]
+    top, bottom = delta_h//2, delta_h-(delta_h//2)
+    left, right = delta_w//2, delta_w-(delta_w//2)
+    preprocessed_img = cv2.copyMakeBorder(image, top, bottom, left, right, cv2.BORDER_CONSTANT, value=padding_color)
 
-# Not used for now
+    return preprocessed_img
+
 def preprocess(image: np.ndarray):
     """
     Takes in a numpy array that has been preprocessed 
@@ -85,8 +101,8 @@ def postprocess(confidence, bbox_array: np.ndarray,raw_image: np.ndarray, veloci
     """
     
     detections = _convert_bboxes_to_pixel(bbox_array, raw_image.shape)
-    detections = _object_filter(raw_image, detections) #color segmentation
-    detections = _verify_object(raw_image, detections,velocity)
+    # detections = _object_filter(raw_image, detections) #color segmentation
+    # detections = _verify_object(raw_image, detections,velocity)
 
     return detections
 
@@ -115,7 +131,6 @@ def _convert_bboxes_to_pixel(bbox_array: np.ndarray, image_shape: Tuple[int, int
 def _object_filter(image: np.ndarray, bboxes: List[Tuple[int, int, int, int]]) -> List[Tuple[int, int, int, int]]:
     """
     Filters objects in an image based on bounding boxes and color thresholds.
-
     Args:
         image (np.ndarray): The input image in which objects are to be filtered.
         bboxes (List[Tuple[int, int, int, int]]): A list of bounding boxes.
@@ -189,7 +204,7 @@ def _verify_object(raw_image, bboxes, velocity=0):
         return adjusted_bboxes
 
 
-def draw_boxes(image: np.ndarray, bboxes: list, with_roi =True, with_roi_shift = True, velocity = 0) -> np.ndarray:
+def draw_boxes(image: np.ndarray, bboxes: list, with_roi =False, with_roi_shift = False, velocity = 0) -> np.ndarray:
     """
     Given array of bounding box tuples and an image, draw the bounding boxes into the image. 
     If with_roi and with_roi shift is set to true, the ROI areas will also be drawn in. 
@@ -225,10 +240,15 @@ def draw_boxes(image: np.ndarray, bboxes: list, with_roi =True, with_roi_shift =
     color = tuple(np.random.randint(0, 256, 3).tolist())  # Generate a random color
     
     for bbox in bboxes:
-        x1, y1, x2, y2 = map(int, bbox)
+        x1, y1, x2, y2, label = map(int, bbox)
 
-        # print(f"Bounding box: ({x1}, {y1}), ({x2}, {y2})")
-        image = cv2.rectangle(image, (x1, y1), (x2, y2),(255, 0, 0), 2)
+
+        image = cv2.rectangle(image, (x1, y1), (x2, y2), (255, 0, 0), 2)
+        label = f"Object {label}"
+        cv2.putText(image, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
+
+    
+    image = _resize_with_padding(image)
 
     return image
 
