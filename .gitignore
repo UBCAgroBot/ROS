@@ -2,3 +2,4 @@ build/
 install/
 log/
 __pycache__/
+ros2_ws/src/python_package/test/test_output/*

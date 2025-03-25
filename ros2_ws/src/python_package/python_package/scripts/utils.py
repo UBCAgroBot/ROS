@@ -14,6 +14,36 @@ CONTOUR_AREA_THRESHOLD = 500
 POSTPROCESS_OUTPUT_SHAPE = (640, 640)
 
 
+# Note sure if we should keep a class-based or function based approach, 
+# but our current test suite uses a class based approach so I re-added the 
+# class based approach as well.
+class ModelInference:
+    def __init__(self, weights_path=None, precision=None):
+        print(f"Initialising model with weights at {weights_path}")
+        if not os.path.exists(weights_path):
+            print(f" XXX weights file not found at {weights_path}")
+            raise FileNotFoundError(f"vXXXweights file not found at {weights_path}. Our directory: {os.getcwd()}")
+        self.model = initialise_model(weights_path=weights_path, precision=precision)
+
+    def preprocess(self, image: np.ndarray) -> np.ndarray:
+        return preprocess(image)
+    
+    def inference(self, image: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        return run_inference(self.model, image)
+    
+    def postprocess(self, confidence: np.ndarray, bbox_array: np.ndarray, raw_image: np.ndarray, velocity=0) -> List[Tuple[int, int, int, int]]:
+        return postprocess(confidence, bbox_array, raw_image, velocity)
+    
+    def draw_boxes(self, image: np.ndarray, bboxes: list, labels: list=[], with_roi=False, with_roi_shift=False, velocity=0) -> np.ndarray:
+        return draw_boxes(image, bboxes, labels, with_roi, with_roi_shift, velocity)
+    
+    def object_filter(self, image: np.ndarray, bboxes: List[Tuple[int, int, int, int]]) -> List[Tuple[int, int, int, int]]:
+        return _object_filter(image, bboxes)
+    
+    def get_roi_coordinates(self, image: np.ndarray) -> List[int]:
+        return _get_roi_coordinates(image)
+    
+
 
 def initialise_model(weights_path=None, precision=None):
     """
@@ -21,7 +51,7 @@ def initialise_model(weights_path=None, precision=None):
     """
     if not os.path.exists(weights_path):
         print(f"weights file not found at {weights_path}")
-        raise FileNotFoundError(f"weights file not found at {weights_path}")
+        raise FileNotFoundError(f"weights file not found at {weights_path}. Our directory: {os.getcwd()}")
     
     #TODO: do something with the precision
     
@@ -32,18 +62,21 @@ def _resize_with_padding(image: np.ndarray):
     """
     Resize the image to the desired shape and pad the image with a constant color.
     """
-    new_shape = POSTPROCESS_OUTPUT_SHAPE
     padding_color = (0, 255, 255)
     original_shape = (image.shape[1], image.shape[0])
-    ratio = float(max(new_shape))/max(original_shape)
+    ratio = float(max(POSTPROCESS_OUTPUT_SHAPE))/max(original_shape)
     new_size = tuple([int(x*ratio) for x in original_shape])
     image = cv2.resize(image, new_size)
-    delta_w = new_shape[0] - new_size[0]
-    delta_h = new_shape[1] - new_size[1]
+    delta_w = POSTPROCESS_OUTPUT_SHAPE[0] - new_size[0]
+    delta_h = POSTPROCESS_OUTPUT_SHAPE[1] - new_size[1]
     top, bottom = delta_h//2, delta_h-(delta_h//2)
     left, right = delta_w//2, delta_w-(delta_w//2)
     preprocessed_img = cv2.copyMakeBorder(image, top, bottom, left, right, cv2.BORDER_CONSTANT, value=padding_color)
 
+    preprocessed_img = cv2.resize(preprocessed_img, POSTPROCESS_OUTPUT_SHAPE)
+    assert preprocessed_img.shape == POSTPROCESS_OUTPUT_SHAPE + (3,)
+
+    print(f"Resized image to {POSTPROCESS_OUTPUT_SHAPE}")
     return preprocessed_img
 
 def preprocess(image: np.ndarray):
@@ -101,8 +134,8 @@ def postprocess(confidence, bbox_array: np.ndarray,raw_image: np.ndarray, veloci
     """
     
     detections = _convert_bboxes_to_pixel(bbox_array, raw_image.shape)
-    # detections = _object_filter(raw_image, detections) #color segmentation
-    # detections = _verify_object(raw_image, detections,velocity)
+    detections = _object_filter(raw_image, detections) #color segmentation
+    detections = _verify_object(raw_image, detections,velocity)
 
     return detections
 
@@ -204,7 +237,7 @@ def _verify_object(raw_image, bboxes, velocity=0):
         return adjusted_bboxes
 
 
-def draw_boxes(image: np.ndarray, bboxes: list, with_roi =False, with_roi_shift = False, velocity = 0) -> np.ndarray:
+def draw_boxes(image: np.ndarray, bboxes: list, labels:list=[], with_roi =False, with_roi_shift = False, velocity = 0) -> np.ndarray:
     """
     Given array of bounding box tuples and an image, draw the bounding boxes into the image. 
     If with_roi and with_roi shift is set to true, the ROI areas will also be drawn in. 
@@ -239,16 +272,15 @@ def draw_boxes(image: np.ndarray, bboxes: list, with_roi =False, with_roi_shift 
 
     color = tuple(np.random.randint(0, 256, 3).tolist())  # Generate a random color
     
-    for bbox in bboxes:
-        x1, y1, x2, y2, label = map(int, bbox)
-
+    for idx, bbox in enumerate(bboxes):
+        x1, y1, x2, y2 = map(int, bbox)
 
         image = cv2.rectangle(image, (x1, y1), (x2, y2), (255, 0, 0), 2)
-        label = f"Object {label}"
-        cv2.putText(image, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
 
-    
-    image = _resize_with_padding(image)
+        if len(labels) > 0:
+            label = labels[idx]
+            label = f"Object {label}"
+            cv2.putText(image, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
 
     return image
 

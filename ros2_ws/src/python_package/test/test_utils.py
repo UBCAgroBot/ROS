@@ -1,7 +1,11 @@
 import unittest
+import pytest
 import cv2
 import numpy as np
 import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../python_package')))
+
 from pathlib import Path
 from python_package.scripts.utils import ModelInference
 
@@ -13,15 +17,16 @@ class TestModelInference(unittest.TestCase):
         cls.data_dir = cls.test_dir / "test_data"
         cls.output_dir = cls.test_dir / "test_output"
         cls.output_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Initialize model with test weights
         cls.model = ModelInference(
-            weights_path="",  # TODO: Update with actual test weights path
+            weights_path="Models\maize\Maize.onnx",
             precision="fp16"
         )
         
         # Load test image
-        cls.test_image = cv2.imread(str(cls.data_dir / "test_image.jpg"))
+        cls.test_image = cv2.imread(str(cls.data_dir / "assets/maize/IMG_1822_14.JPG"))
+
         if cls.test_image is None:
             raise FileNotFoundError("Test image not found")
 
@@ -56,6 +61,10 @@ class TestModelInference(unittest.TestCase):
         # Create synthetic boxes for testing
         test_boxes = np.array([[0.2, 0.2, 0.4, 0.4],  # Normalized coordinates
                              [0.6, 0.6, 0.8, 0.8]])
+        
+        h,w = self.test_image.shape[:2]
+        test_boxes = test_boxes * np.array([w, h, w, h])
+        test_boxes = test_boxes.astype(int)
         
         filtered_boxes = self.model.object_filter(self.test_image, test_boxes)
         
@@ -123,5 +132,3 @@ class TestModelInference(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-
-# python3 workspace_python/ros2_ws/src/python_package/test/test_utils.py

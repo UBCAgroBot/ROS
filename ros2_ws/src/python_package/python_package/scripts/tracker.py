@@ -37,6 +37,7 @@ class EuclideanDistTracker:
 
     def update(self, objects_rect):
         # Objects boxes and ids
+        labels = []
         objects_bbs_ids = []
         centers = self.center_points.copy()
 
@@ -53,6 +54,7 @@ class EuclideanDistTracker:
                 if dist < self.threshold:
                     self.center_points[item_id] = (cx, cy)
                     objects_bbs_ids.append([x1, y1, x2, y2, item_id])
+                    labels.append(item_id)
                     same_object_detected = True
                     centers.pop(item_id)
                     break
@@ -62,6 +64,7 @@ class EuclideanDistTracker:
                 item_id = self.id_count
                 self.center_points[self.id_count] = (cx, cy)
                 objects_bbs_ids.append([x1, y1, x2, y2, item_id])
+                labels.append(item_id)
                 self.id_count += 1
 
         # Clean the dictionary by center points to remove IDS not used anymore
@@ -73,4 +76,4 @@ class EuclideanDistTracker:
 
         # Update dictionary with IDs not used removed
         self.center_points = new_center_points.copy()
-        return objects_bbs_ids
+        return labels

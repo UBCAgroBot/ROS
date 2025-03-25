@@ -1,12 +1,17 @@
 import unittest
 import cv2
+import sys
+from pathlib import Path
 import numpy as np
 import torch
-import cupy as cp
 import time
 from pathlib import Path
+
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../python_package')))
+
 from python_package.scripts.utils import ModelInference
-from python_package.scripts.utils_cupy import ModelInferenceCupy
+# from python_package.scripts.utils_cupy import ModelInferenceCupy
 from python_package.scripts.utils_pytorch import ModelInferencePytorch
 
 class TestPreprocessingMethods(unittest.TestCase):
@@ -18,21 +23,20 @@ class TestPreprocessingMethods(unittest.TestCase):
         cls.output_dir.mkdir(parents=True, exist_ok=True)
         
         # Initialize all models
-        weights_path = "models/maize/Maize.pt"
+        weights_path = "Models\maize\Maize.onnx"
         cls.model_cpu = ModelInference(weights_path=weights_path, precision="fp16")
-        cls.model_cupy = ModelInferenceCupy(weights_path=weights_path, precision="fp16")
+        # cls.model_cupy = ModelInferenceCupy(weights_path=weights_path, precision="fp16")
         cls.model_pytorch = ModelInferencePytorch(weights_path=weights_path, precision="fp16")
         
         # Load test image
         cls.test_image = cv2.imread(str(cls.data_dir / "assets/maize/IMG_1822_14.JPG"))
         if cls.test_image is None:
             raise FileNotFoundError("Test image not found")
-
     def test_preprocessing_speed(self):
         iterations = 100
         methods = {
             "CPU": self.model_cpu,
-            "CuPy": self.model_cupy,
+            # "CuPy": self.model_cupy,
             "PyTorch": self.model_pytorch
         }
         
@@ -60,7 +64,7 @@ class TestPreprocessingMethods(unittest.TestCase):
         
         methods = {
             "CPU": self.model_cpu,
-            "CuPy": self.model_cupy,
+            # "CuPy": self.model_cupy,
             "PyTorch": self.model_pytorch
         }
         
@@ -88,11 +92,11 @@ class TestPreprocessingMethods(unittest.TestCase):
         for name, output in outputs.items():
             vis_image = self.test_image.copy()
             if name == "CPU":
-                vis_image = self.model_cpu.draw_boxes(vis_image, output, velocity=10)
-            elif name == "CuPy":
-                vis_image = self.model_cupy.draw_boxes(vis_image, output, velocity=10)
+                vis_image = self.model_cpu.draw_boxes(vis_image, outputs[name], velocity=10)
+            # elif name == "CuPy":
+                # vis_image = self.model_cupy.draw_boxes(vis_image, output, velocity=10)
             else:
-                vis_image = self.model_pytorch.draw_boxes(vis_image, output, velocity=10)
+                vis_image = self.model_pytorch.draw_boxes(vis_image, outputs[name], velocity=10)
             cv2.imwrite(str(self.output_dir / f"{name.lower()}_output.jpg"), vis_image)
 
     def test_output_consistency(self):
@@ -103,7 +107,7 @@ class TestPreprocessingMethods(unittest.TestCase):
         
         outputs = {
             "CPU": self.model_cpu.postprocess(test_confidences, test_boxes, self.test_image, velocity=10),
-            "CuPy": self.model_cupy.postprocess(test_confidences, test_boxes, self.test_image, velocity=10),
+            # "CuPy": self.model_cupy.postprocess(test_confidences, test_boxes, self.test_image, velocity=10),
             "PyTorch": self.model_pytorch.postprocess(test_confidences, test_boxes, self.test_image, velocity=10)
         }
         

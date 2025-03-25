@@ -69,9 +69,9 @@ class ExterminationNode(Node):
         
         bounding_boxes = postprocess(confidence,bboxes, raw_image,msg.velocity)
 
-        bbox_with_label = self.tracker.update(bounding_boxes)
+        labels = self.tracker.update(bounding_boxes)
 
-        final_image = draw_boxes(raw_image,bbox_with_label,velocity=msg.velocity)
+        final_image = draw_boxes(raw_image,bounding_boxes,labels,velocity=msg.velocity)
 
 
         if self.use_display_node:
