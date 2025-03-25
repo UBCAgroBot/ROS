@@ -51,4 +51,17 @@ The `scripts` folder contains various action scripts used in the project.
 
 ### `python_wip`
 
-This folder contains experimental Python code related to computer vision that is still under development and may be pushed in the future.
+This folder contains experimental Python code related to computer vision that is still under development and may be pushed in the future
+
+
+
+## Running Tests
+#### prereqs: 
+TBD
+<!-- TODO: maybe specify a dev container that they can use to run the tests -->
+
+#### Running the test:
+```bash
+pytest ./ros2_ws #to run print statements, add the -s flag
+
+```
