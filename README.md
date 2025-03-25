@@ -37,21 +37,7 @@ Congratulations 🎉! The entire stack is now running locally on your computer.
 
 ## Other Available Utilities
 
-### Assets
-
-The `assets` folder contains all image and video sources for testing:
-- Video files should be named `video.mp4`.
-- Images can have any name but must end with `.jpg` or `.png`.
-
-Maize model dimensions: 1024x448 (448 is the width).
-
-### `action_scripts`
-
-The `scripts` folder contains various action scripts used in the project.
-
-### `python_wip`
-
-This folder contains experimental Python code related to computer vision that is still under development and may be pushed in the future
+TBD
 
 
 
