@@ -33,7 +33,7 @@ def draw_bounding_box(img, class_id, confidence, x, y, x_plus_w, y_plus_h):
     cv2.rectangle(img, (x, y), (x_plus_w, y_plus_h), color, 2)
     cv2.putText(img, label, (x - 10, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
-
+# TODO: test
 def main(onnx_model, input_image):
     """
     Main function to load ONNX model, perform inference, draw bounding boxes, and display the output image.
@@ -47,6 +47,10 @@ def main(onnx_model, input_image):
     """
     # Load the ONNX model
     model: cv2.dnn.Net = cv2.dnn.readNetFromONNX(onnx_model)
+
+    # TODO: Test if this works later
+    # model.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
+    # model.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
 
     # Read the input image
     original_image: np.ndarray = cv2.imread(input_image)
@@ -132,6 +136,104 @@ if __name__ == "__main__":
     args = parser.parse_args()
     main(args.model, args.img)
 
+    def post_process_gpu(self, output, original_image, scales, conf_threshold=0.5, iou_threshold=0.4):
+        """
+        GPU post-process the model output to extract bounding boxes, confidence, and class scores.
+        Rescale the boxes back to the original image size.
+        :param output: Raw output from the model.
+        :param original_image: Original image for drawing bounding boxes.
+        :param scales: Scaling factors to map the boxes back to original size.
+        :param conf_threshold: Confidence score threshold for filtering detections.
+        :param iou_threshold: IOU threshold for non-maximum suppression (NMS).
+        :return: Image with annotated bounding boxes.
+        """
+        scale_x, scale_y = scales
+        boxes = cp.array(output[0])
+  
+        # Filter boxes by confidence threshold
+        conf_mask = boxes[:, 4] >= conf_threshold
+        boxes = boxes[conf_mask]
+
+        # Rescale box coordinates to the original image size
+        boxes[:, 0]*=scale_x
+        boxes[:, 2]*=scale_x
+        boxes[:, 1]*=scale_y
+        boxes[:, 3]*=scale_y
+
+        # Apply NMS using IoU
+        keep = self.nms_gpu(boxes, iou_threshold)
+        filtered_boxes = boxes[keep]
+
+        # Convert back to numpy array for CPU
+        filtered_boxes_cpu = cp.asnumpy(filtered_boxes)
+
+        # Annotate the image with bounding boxes
+        for (x1, y1, x2, y2, score, class_id) in filtered_boxes_cpu:
+            # Draw bounding box
+            cv2.rectangle(original_image, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
+            # Put label and score
+            label = f"Class {int(class_id)}: {score:.2f}"
+            cv2.putText(original_image, label, (int(x1), int(y1)-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+
+        return original_image, filtered_boxes_cpu
+
+    def nms_gpu(self, boxes, iou_threshold):
+        """
+        Perform Non-Maximum Suppression (NMS) on bounding boxes.
+        Uses CuPy for sorting and thresholding.
+
+        :param boxes: List of boxes in the format [x1, y1, x2, y2, score, class_id].
+        :param iou_threshold: Intersection-over-Union threshold for filtering overlapping boxes.
+        :return: Filtered list of bounding boxes after NMS (cp.ndarray)
+        """
+        if len(boxes) == 0:
+            return cp.array([], dtype=cp.int32)
+        
+        # Sort indices by confidence score (descending)
+        scores = boxes[:, 4]
+        order = cp.argsort(scores)[::-1]
+
+        keep_boxes = []
+        while (order.size > 0):
+            i = int(order[0])
+            keep_boxes.append(i)
+
+            # Find IoU between highest-scoring box and all other boxes
+            ious = iou_gpu(boxes[i], boxes[order[1:]])
+
+            # Keep if IoU below iou_threshold
+            idxs = cp.where(ious<=iou_threshold)[0]
+            order = order[idxs+1]
+        
+        return cp.array(keep_boxes, dtype=cp.int32)
+
+    def iou_gpu(self, box1, boxes):
+        """
+        Calculate Intersection over Union (IoU) between a single box to other boxes.
+        :param box1: 1D array representing a single box [x1, y1, x2, y2, score, class_id]
+        :param boxes: 2D array representing multiple boxes
+        :return: Array of IoU values between box1 and each box in boxes
+        """
+        # Compute coords of intersection rectangle
+        x1 = cp.maximum(box1[0], boxes[:, 0])
+        y1 = cp.maximum(box1[1], boxes[:, 1])
+        x2 = cp.minimum(box1[2], boxes[:, 2])
+        y2 = cp.minimum(box1[3], boxes[:, 3])
+
+        # Compute intersection area
+        inter_w = cp.maximum(x2-x1, 0)
+        inter_h = cp.maximum(y2-y1, 0)
+        inter_area = inter_w * inter_h
+
+        # Compute areas of box1 and other boxes
+        box1_area = (box1[2]-box1[0]) * (box1[3]-box1[1])
+        boxes_area = (boxes[:,2]-boxes[:,0]) * (boxes[:,3]-boxes[:,1])
+
+        # Compute union area
+        union_area = box1_area + boxes_area - inter_area
+
+        return inter_area / union_area
+
     def post_process(self, output, original_image, scales, conf_threshold=0.5, iou_threshold=0.4):
         """
         Post-process the model output to extract bounding boxes, confidence, and class scores.
@@ -160,6 +262,7 @@ if __name__ == "__main__":
 
         # Apply Non-Maximum Suppression (NMS)
         filtered_boxes = self.nms(filtered_boxes, iou_threshold)
+
 
         # Annotate the image with bounding boxes
         for (x1, y1, x2, y2, score, class_id) in filtered_boxes:
