@@ -3,9 +3,9 @@ name: Delivery Pipeline
 run-name: Delivery pipeline triggered by ${{ github.actor }} 
 
 on: 
-  # push: # pushes to the main branch only occur if the merge request has been accepted
-  #   branches:
-  #     - main
+  push: # pushes to the main branch only occur if the merge request has been accepted
+    branches:
+      - main
 
   workflow_call: 
     outputs:

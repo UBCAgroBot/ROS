@@ -1,19 +1,9 @@
+# Converts a model from PyTorch to ONNX/TensorRT format and runs unit tests
 name: Model Conversion Pipeline
-
-## unit/integration testing
-
-## particularly for building/running the tensorRT engine on the jetson with setup
-
-# same thing for running onnx runtime model
-
-
-## save images and upload as an artifact from pipeline
-
-## include detection confidence scores
+run-name: Model conversion pipeline triggered by ${{ github.actor }}
 
 ## should trigger second pipeline after for performance testing
-
-# save 
+# copy same logic from integration pipeline for claling nother workflow
 
 on:
   workflow_dispatch:
@@ -27,25 +17,17 @@ on:
         required: true
         type: choice
         options:
-          - pytorch-to-trt
-          - tensorflow-to-trt
-          - onnx-to-trt
-          - pytorch-to-onnx-to-trt
-          - tensorflow-to-onnx-to-trt
-
-# refine default args after argparse + successful testing
+          - pytorch-onnx
+          - pytorch-onnx-tensorrt
 
 jobs:
+  # container
   convert-model:
     runs-on: self-hosted
 
-    strategy:
-      matrix:
-        conversion_type: [pytorch-to-trt, tensorflow-to-trt, onnx-to-trt, pytorch-to-onnx-to-trt, tensorflow-to-onnx-to-trt]
-
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Run Conversion
         run: |
@@ -53,22 +35,6 @@ jobs:
             "pytorch-to-trt")
               docker run --rm -v ${{ github.workspace }}:/workspace nvcr.io/nvidia/tensorrt:23.06-py3 \
               bash -c "cd /workspace && python3 convert_pytorch_to_trt.py --model ${{ github.event.inputs.file_name }}"
-              ;;
-            "tensorflow-to-trt")
-              docker run --rm -v ${{ github.workspace }}:/workspace nvcr.io/nvidia/tensorrt:23.06-py3 \
-              bash -c "cd /workspace && python3 convert_tensorflow_to_trt.py --model ${{ github.event.inputs.file_name }}"
-              ;;
-            "onnx-to-trt")
-              docker run --rm -v ${{ github.workspace }}:/workspace nvcr.io/nvidia/tensorrt:23.06-py3 \
-              bash -c "cd /workspace && python3 convert_onnx_to_trt.py --model ${{ github.event.inputs.file_name }}"
-              ;;
-            "pytorch-to-onnx-to-trt")
-              docker run --rm -v ${{ github.workspace }}:/workspace nvcr.io/nvidia/tensorrt:23.06-py3 \
-              bash -c "cd /workspace && python3 convert_pytorch_to_onnx_to_trt.py --model ${{ github.event.inputs.file_name }}"
-              ;;
-            "tensorflow-to-onnx-to-trt")
-              docker run --rm -v ${{ github.workspace }}:/workspace nvcr.io/nvidia/tensorrt:23.06-py3 \
-              bash -c "cd /workspace && python3 convert_tensorflow_to_onnx_to_trt.py --model ${{ github.event.inputs.file_name }}"
               ;;
             *)
               echo "Invalid conversion type!"
