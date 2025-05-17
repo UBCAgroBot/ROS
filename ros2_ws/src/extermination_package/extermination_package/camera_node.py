@@ -1,116 +1,114 @@
 import os
 import cv2
+import random
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import String
+from std_msgs.msg import String, Header
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
+
+from custom_interfaces.msg import ImageInput
+from .scripts.utils import preprocess
 
 class CameraNode(Node):
     def __init__(self):
         super().__init__('camera_node')
 
         # Parameters
-        self.declare_parameter('input_type', 'video')  # 'video' or 'image'
-        self.declare_parameter('input_path', '') # no video path yet  
-        self.declare_parameter('frame_rate', 10)  # Frames per second for video
+        self.declare_parameter('video_path', '/home/vscode/workspace/assets/IMG_5947.MOV')
+        self.declare_parameter('loop', -1)
+        self.declare_parameter('frame_rate', 10)
 
-        # Get parameters
-        self.input_type = self.get_parameter('input_type').get_parameter_value().string_value
-        self.input_path = self.get_parameter('input_path').get_parameter_value().string_value
+        self.video_path = self.get_parameter('video_path').get_parameter_value().string_value
+        if not os.path.isabs(self.video_path):
+            self.video_path = os.path.join(os.getcwd(), self.video_path)
+        self.loop = self.get_parameter('loop').get_parameter_value().integer_value
         self.frame_rate = self.get_parameter('frame_rate').get_parameter_value().integer_value
 
-        # Resolve input path
-        if not os.path.isabs(self.input_path):
-            self.input_path = os.path.join(os.getcwd(), self.input_path)
-
-        # Initialize input source
         self.bridge = CvBridge()
-        self.robot_state = 'stopped'  # Default state
-        self.video_capture = None
+        self.loop_count = 0
+        self.image_counter = 0
+        self.vr = None
+        self.timer = None
+        self.robot_state = 'stopped'
 
-        if self.input_type == 'video':
-            self.init_video()
-        elif self.input_type == 'image':
-            self.init_image()
-        else:
-            self.get_logger().error(f"Invalid input_type: {self.input_type}. Use 'video' or 'image'.")
-            self.destroy_node()
-
-        # ROS 2 communication
+        self.input_image_publisher = self.create_publisher(ImageInput, 'image_input', 10)
         self.state_subscription = self.create_subscription(
-            String,
-            '/robot_state',
-            self.state_callback,
-            10
+            String, '/robot_state', self.state_callback, 10
         )
-        self.image_publisher = self.create_publisher(Image, '/camera/image_raw', 10)
 
-        self.get_logger().info('CameraNode has been started.')
-
-    def init_video(self):
-        """Initialize video input."""
-        self.video_capture = cv2.VideoCapture(self.input_path)
-        if not self.video_capture.isOpened():
-            self.get_logger().error(f"Failed to open video: {self.input_path}")
-            self.destroy_node()
-
-    def init_image(self):
-        """Initialize static image input."""
-        if not os.path.exists(self.input_path):
-            self.get_logger().error(f"Image file not found: {self.input_path}")
-            self.destroy_node()
-        self.static_image = cv2.imread(self.input_path)
-        if self.static_image is None:
-            self.get_logger().error(f"Failed to read image: {self.input_path}")
-            self.destroy_node()
+        self.openVR()
+        video_fps = self.vr.get(cv2.CAP_PROP_FPS)
+        self.interval = max(1, int(video_fps / self.frame_rate)) if video_fps > 0 else 1
+        self.counter = 0
 
     def state_callback(self, msg):
-        """Callback for /robot_state topic."""
         self.robot_state = msg.data
-        self.get_logger().info(f'Received robot state: {self.robot_state}')
+        if self.robot_state == 'moving':
+            if self.timer is None:
+                timer_period = 1 / self.frame_rate
+                self.timer = self.create_timer(timer_period, self.publish_video_frame)
+        else:
+            if self.timer is not None:
+                self.timer.cancel()
+                self.timer = None
+            self.publish_static_image()
 
-        if self.robot_state == 'moving' and self.input_type == 'video':
-            self.start_continuous_capture()
-        elif self.robot_state == 'stopped':
-            self.capture_static_image()
+    def publish_video_frame(self):
+        # Only publish if robot is moving
+        if self.robot_state != 'moving':
+            return
+        count = 0
+        interval = self.interval
+        success, image = self.vr.read()
+        while success:
+            if count == interval:
+                self.publish_image(image)
+                return
+            success, image = self.vr.read()
+            count += 1
 
-    def start_continuous_capture(self):
-        """Continuously capture and publish frames from the video."""
-        self.get_logger().info('Robot is moving. Starting continuous video capture...')
-        while self.robot_state == 'moving' and rclpy.ok():
-            success, frame = self.video_capture.read()
-            if success:
-                self.publish_image(frame)
-            else:
-                self.get_logger().info('End of video reached. Restarting...')
-                self.video_capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
+        # End of video
+        if self.loop == -1 or self.loop_count < self.loop:
+            self.openVR()
+            self.loop_count += 1
+            self.publish_video_frame()
+        else:
+            if self.timer is not None:
+                self.timer.cancel()
+            self.get_logger().info("Finished publishing images")
+            self.destroy_node()
 
-    def capture_static_image(self):
-        """Publish a single static image."""
-        self.get_logger().info('Robot is stopped. Publishing static image...')
-        if self.input_type == 'image':
-            self.publish_image(self.static_image)
-        elif self.input_type == 'video':
-            # Publish the last frame from the video
-            success, frame = self.video_capture.read()
-            if success:
-                self.publish_image(frame)
+    def publish_static_image(self):
+        # Publish the current frame as a static image
+        success, image = self.vr.read()
+        if success:
+            self.publish_image(image)
 
-    def publish_image(self, frame):
-        """Convert and publish an image to the /camera/image_raw topic."""
-        try:
-            ros_image = self.bridge.cv2_to_imgmsg(frame, encoding='bgr8')
-            self.image_publisher.publish(ros_image)
-            self.get_logger().info('Published image to /camera/image_raw.')
-        except Exception as e:
-            self.get_logger().error(f'Failed to publish image: {e}')
+    def publish_image(self, image):
+        image_input = ImageInput()
+        raw_image = image
+        postprocessed_img = preprocess(raw_image)
+        postprocessed_img_msg = self.bridge.cv2_to_imgmsg(postprocessed_img, encoding='rgb8')
+        raw_img_msg = self.bridge.cv2_to_imgmsg(raw_image, encoding='rgb8')
 
-    def destroy_node(self):
-        """Clean up resources."""
-        if self.video_capture is not None:
-            self.video_capture.release()
-        super().destroy_node()
+        image_input.header = Header()
+        image_input.header.frame_id = 'camera'
+        image_input.raw_image = raw_img_msg
+        image_input.preprocessed_image = postprocessed_img_msg
+        image_input.velocity = random.uniform(0, 1)
+
+        self.input_image_publisher.publish(image_input)
+        self.get_logger().info(f"Published image {self.image_counter}")
+        self.image_counter += 1
+
+    def openVR(self):
+        self.vr = cv2.VideoCapture(self.video_path)
+        if not self.vr.isOpened():
+            self.get_logger().error(f"Error: Could not open video at {self.video_path}")
+            if self.timer is not None:
+                self.timer.cancel()
+            self.destroy_node()
 
 def main(args=None):
     rclpy.init(args=args)
