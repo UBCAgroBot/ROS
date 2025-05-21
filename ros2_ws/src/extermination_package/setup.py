@@ -22,6 +22,8 @@ setup(
         'console_scripts': [
             'camera_node = extermination_package.camera_node:main',
             'video_node = extermination_package.video_node:main',
+            'inference_node = extermination_package.inference_node:main',
+            'main_control_node = extermination_package.main_control_node:main'
         ],
     },
 )

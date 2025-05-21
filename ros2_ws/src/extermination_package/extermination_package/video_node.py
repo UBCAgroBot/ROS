@@ -5,12 +5,15 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 
+# publish static image data to /image topic
+# listens to /robot_status
+
 class VideoNode(Node):
     def __init__(self):
         super().__init__('video_node')
 
         # Declare parameters
-        self.declare_parameter('video_path', '')  # no video yet
+        self.declare_parameter('video_path', '/home/vscode/workspace/assets/IMG_5947.MOV')  # no video yet
         self.declare_parameter('loop', -1)  # -1 = loop forever, 0 = no loop, >0 = loop count
         self.declare_parameter('frame_rate', 10) 
 
@@ -19,7 +22,7 @@ class VideoNode(Node):
         self.loop = self.get_parameter('loop').get_parameter_value().integer_value
         self.frame_rate = self.get_parameter('frame_rate').get_parameter_value().integer_value
 
-        # Resolve video path
+        # Resolve path
         if not os.path.isabs(self.video_path):
             self.video_path = os.path.join(os.getcwd(), self.video_path)
 

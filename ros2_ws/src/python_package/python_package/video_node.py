@@ -16,7 +16,7 @@ class VideoNode(Node):
     def __init__(self):
         super().__init__('video_node')
 
-        self.declare_parameter('video_path', '/home/user/ROS/assets/test_videos/IMG_5947.MOV')
+        self.declare_parameter('video_path', '/home/vscode/workspace/ros2_ws/src/extermination_package/extermination_package/video_node.py')
         self.declare_parameter('loop', -1)  # 0 = don't loop, >0 = # of loops, -1 = loop forever
         self.declare_parameter('frame_rate', 10)  # Desired frame rate for publishing
         self.declare_parameter('camera_side', 'left')
@@ -36,7 +36,7 @@ class VideoNode(Node):
         self.image_counter = 0
 
         
-        self.openVR()
+ 
          
         video_fps =  self.vr.get(cv2.CAP_PROP_FPS)
         self.interval = int(video_fps / self.frame_rate)
@@ -46,7 +46,7 @@ class VideoNode(Node):
         self.input_image_publisher = self.create_publisher(ImageInput, f'{self.camera_side}_image_input', 10)
         timer_period = 1/self.frame_rate  # publish every 0.5 seconds
         self.timer = self.create_timer(timer_period * 2, self.publish_static_image)
-
+        self.openVR()
 
     
     def publish_static_image(self):

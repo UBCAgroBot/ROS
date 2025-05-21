@@ -8,7 +8,7 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 
 from custom_interfaces.msg import ImageInput
-from .scripts.utils import preprocess
+from python_package.scripts.utils import preprocess
 
 class CameraNode(Node):
     def __init__(self):
@@ -25,6 +25,9 @@ class CameraNode(Node):
         self.loop = self.get_parameter('loop').get_parameter_value().integer_value
         self.frame_rate = self.get_parameter('frame_rate').get_parameter_value().integer_value
 
+        # Log
+        self.get_logger().info(f"CameraNode initialized with video_path: {self.video_path}, loop: {self.loop}, frame_rate: {self.frame_rate}")
+
         self.bridge = CvBridge()
         self.loop_count = 0
         self.image_counter = 0
@@ -39,10 +42,12 @@ class CameraNode(Node):
 
         self.openVR()
         video_fps = self.vr.get(cv2.CAP_PROP_FPS)
+        self.get_logger().info(f"Opened video. FPS: {video_fps}")
         self.interval = max(1, int(video_fps / self.frame_rate)) if video_fps > 0 else 1
         self.counter = 0
 
     def state_callback(self, msg):
+        self.get_logger().info(f"Received /robot_state: {msg.data}")
         self.robot_state = msg.data
         if self.robot_state == 'moving':
             if self.timer is None:
